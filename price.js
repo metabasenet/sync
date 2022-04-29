@@ -41,8 +41,6 @@ const conn = mysql.createConnection({
     port: '3306',                   
     database: 'mnt'});
 
-conn.connect();
-
 function query(sql,params) {
     return new Promise(fun => {
         conn.query(sql,params,function(err,result) {
@@ -123,6 +121,7 @@ async function UpdateHeight(height_) {
     await query(sql);
 }
 async function Main() {
+    conn.connect();
     const ret = await query(`SELECT IFNULL(max(height), 0) as height FROM uniswap`);
     if (ret[0].height == 0) {
         UpdateHeight(begin_height);
