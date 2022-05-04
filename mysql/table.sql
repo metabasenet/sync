@@ -24,7 +24,7 @@ DROP TABLE IF EXISTS `addr`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `addr` (
   `walletId` varchar(64) NOT NULL,
-  `hah_addr` varchar(64) DEFAULT NULL,
+  `mnt_addr` varchar(64) DEFAULT NULL,
   `eth_addr` varchar(64) DEFAULT NULL,
   `btc_addr` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`walletId`)
@@ -66,8 +66,8 @@ CREATE TABLE `block` (
   `reward_money` decimal(40,18) DEFAULT NULL,
   `bits` decimal(30,2) DEFAULT NULL,
   `is_useful` bit(1) DEFAULT b'1',
-  `type` varchar(64) DEFAULT NULL COMMENT '区块类型',
-  `txs` bigint(20) DEFAULT NULL COMMENT '区块的交易数量',
+  `type` varchar(64) DEFAULT NULL COMMENT '',
+  `txs` bigint(20) DEFAULT NULL COMMENT '',
   PRIMARY KEY (`id`),
   KEY `hash` (`hash`) USING BTREE,
   KEY `time` (`time`) USING BTREE,
@@ -134,10 +134,10 @@ DROP TABLE IF EXISTS `rank`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `rank` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'id',
-  `address` varchar(65) DEFAULT NULL COMMENT '地址',
-  `ranking` int(11) DEFAULT NULL COMMENT '排名',
-  `yield` decimal(20,6) DEFAULT NULL COMMENT '收益率',
-  `balance` decimal(20,6) DEFAULT NULL COMMENT '余额',
+  `address` varchar(65) DEFAULT NULL COMMENT '',
+  `ranking` int(11) DEFAULT NULL COMMENT '',
+  `yield` decimal(20,6) DEFAULT NULL COMMENT '',
+  `balance` decimal(20,6) DEFAULT NULL COMMENT '',
   PRIMARY KEY (`id`),
   KEY `address` (`address`),
   KEY `ranking` (`ranking`)
@@ -160,12 +160,12 @@ CREATE TABLE `tx` (
   `amount` decimal(40,18) DEFAULT NULL,
   `fee` decimal(40,18) DEFAULT NULL,
   `type` varchar(20) DEFAULT NULL,
-  `dpos_in` varchar(64) DEFAULT NULL COMMENT '挖矿的模板地址',
-  `client_in` varchar(64) DEFAULT NULL COMMENT '挖矿的模板地址对应的钱包地址',
-  `dpos_out` varchar(64) DEFAULT NULL COMMENT '抵押转出的挖矿地址',
-  `client_out` varchar(64) DEFAULT NULL COMMENT '抵押转出的挖矿地址对应的普通地址',
-  `transtime` bigint(20) DEFAULT NULL COMMENT '交易时间',
-  `data` varchar(4096) DEFAULT NULL COMMENT '交易备注',
+  `dpos_in` varchar(64) DEFAULT NULL COMMENT '',
+  `client_in` varchar(64) DEFAULT NULL COMMENT '',
+  `dpos_out` varchar(64) DEFAULT NULL COMMENT '',
+  `client_out` varchar(64) DEFAULT NULL COMMENT '',
+  `transtime` bigint(20) DEFAULT NULL COMMENT '',
+  `data` varchar(4096) DEFAULT NULL COMMENT '',
   `height` int(11) DEFAULT NULL,
   `nonce` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
