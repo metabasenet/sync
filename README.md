@@ -21,6 +21,7 @@ sudo apt install mysql-workbench
 ```
 
 ## sync
+rsync -avz ../sync mnt-sh:/home/ubuntu/mnt 
 ```bash
 vim config.py
 ./run.sh
