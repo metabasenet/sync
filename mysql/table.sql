@@ -197,6 +197,23 @@ CREATE TABLE `uniswap` (
   KEY `height` (`height`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `relation`
+--
+DROP TABLE IF EXISTS `relation`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `relation` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'dataID',
+  `upper` varchar(64) DEFAULT NULL COMMENT 'upper',
+  `lower` varchar(64) DEFAULT NULL COMMENT 'lower',
+  `txid` varchar(64) DEFAULT NULL COMMENT 'txid',
+  `created_at` int(11) DEFAULT NULL COMMENT 'utc time',
+  `achievement` bigint(20) DEFAULT '0' COMMENT '',
+  PRIMARY KEY (`id`),
+  KEY `index2` (`lower`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
