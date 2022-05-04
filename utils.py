@@ -68,9 +68,13 @@ def Base32Encode(md32):
 def Hex2Addr(hex):
     bin = unhexlify(hex)
     if bin[0] == 1:
-        return '1' + Base32Encode(bin[1:])
+        bin = bin[1:]
+        bin = bin[::-1]
+        return '1' + Base32Encode(bin)
     else:
-        return '2' + Base32Encode(bin[1:])
+        bin = bin[1:]
+        bin = bin[::-1]
+        return '2' + Base32Encode(bin)
 
 def Base32Decode5Bytes(psz):
     digit = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, 16, 17, -1, 18, 19, -1, 20, 21, -1, 22, 23, 24, 25, 26, -1, 27, 28, 29, 30, 31, -1, -1, -1, -1, -1, -1, 10, 11, 12, 13, 14, 15, 16, 17, -1, 18, 19, -1, 20, 21, -1, 22, 23, 24, 25, 26, -1, 27, 28, 29, 30, 31, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1];
@@ -109,8 +113,19 @@ def Addr2Hex(addr):
     return hexlify(bytes(t + Base32Decode(addr[1:]))).decode()
 
 if __name__ == '__main__':
-    addr = "1965p604xzdrffvg90ax9bk0q3xyqn5zz2vc9zpbe3wdswzazj7d144mm"
-    hex = "01498b63009dfb70f7ee0902ba95cc171f7d7a97ff16d89fd96e1f1b9e7d5f91da"
-    assert(Hex2Addr(hex) == addr)
-    assert(Addr2Hex(addr) == hex)
+    #addr = "1965p604xzdrffvg90ax9bk0q3xyqn5zz2vc9zpbe3wdswzazj7d144mm"
+    #hex = "01498b63009dfb70f7ee0902ba95cc171f7d7a97ff16d89fd96e1f1b9e7d5f91da"
+    #assert(Hex2Addr(hex) == addr)
+    #assert(Addr2Hex(addr) == hex)
     
+    hex1 = '01ac9a2f4b438a270fcdfe33305db1da885dc53de8e4299bbba765c4207338c310'
+    addr1 = '1231kgws0rhjtfewv57jegfe5bp4dncax60szxk8f4y546jsfkap3t5ws'
+    assert(Hex2Addr(hex1) == addr1)
+    
+    hex2 = '02b5555c2cba77b8a2b1c34959ab91252515eaa600b7c320057095ee8eb8580005'
+    addr2 = '20m05he4extaq0190revg19qa2mjjb4dbb54w7cd2q1vvmb2waptt2cc7'
+    assert(Hex2Addr(hex2) == addr2)
+    
+    hex = '0101014602b5555c2cba77b8a2b1c34959ab91252515eaa600b7c320057095ee8eb858000501ac9a2f4b438a270fcdfe33305db1da885dc53de8e4299bbba765c4207338c31000000000'
+    assert(hex[8:8+66] == hex2)
+    assert(hex[74:74+66] == hex1)
