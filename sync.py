@@ -94,7 +94,7 @@ def InsertTx(block_id,tx,cursor,height):
 
     if tx["type"] == 'defi-relation':
         sql = "insert relation(upper,lower,txid,created_at) value(%s,%s,%s,%s)"
-        cursor.execute(sql,[tx["sendfrom"],tx["sendto"],tx["txid"],tx["time"]])
+        cursor.execute(sql,[tx["from"],tx["to"],tx["txid"],tx["time"]])
 
     
 def RollBACK(block_hash):
