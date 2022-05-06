@@ -278,9 +278,9 @@ def Run():
         else:
             print("getblockhash error:",obj)   
             time.sleep(3)    
-# 地址激活
-# certification dpos 随机生成交易
-# invest-reward 存币生息
+# 
+# certification dpos 
+# invest-reward 
 if __name__ == '__main__':
     #data = "010101460205000b5d642a6844d36b84b00c72c01e221cbb7421c03069888e828ec461e9400129136f7de86c7a7c13a404cb2401e112f53b5df6c4ac11916c83312aa4c3aff300000000"
     #print(GetVote(data))
