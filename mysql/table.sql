@@ -27,11 +27,14 @@ CREATE TABLE `addr` (
   `mnt_addr` varchar(64) DEFAULT NULL,
   `eth_addr` varchar(64) DEFAULT NULL,
   `btc_addr` varchar(64) DEFAULT NULL,
-  PRIMARY KEY (`walletId`)
+  PRIMARY KEY (`walletId`),
+  UNIQUE KEY `mnt_addr_UNIQUE` (`mnt_addr`),
+  UNIQUE KEY `eth_addr_UNIQUE` (`eth_addr`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
---
+
 -- Table structure for table `banners`
 --
 
