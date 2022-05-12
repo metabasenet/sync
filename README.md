@@ -1,7 +1,7 @@
 ## setup db
 ```bash
 sudo apt install mysql-server
-sudo  mysql -u root
+sudo mysql -u root
 mysql> use mysql;
 mysql> CREATE USER 'mnt'@'localhost' IDENTIFIED BY '1234qwer';
 mysql> GRANT ALL ON *.* TO 'mnt'@'localhost';
@@ -20,9 +20,23 @@ mysql> select User,plugin,host from user;
 sudo apt install mysql-workbench
 ```
 
-## sync
-rsync -avz ../sync mnt-sh:/home/ubuntu/mnt 
+## sync 
 ```bash
 vim config.py
 ./run.sh
+```
+
+## bridge by uniswap 
+```bash
+./bridge.py
+```
+
+## update price
+```bash
+./update_price.py
+```
+
+## update program
+```bash
+rsync -avz ../sync mnt-sh:/home/ubuntu/mnt
 ```
