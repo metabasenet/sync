@@ -1,5 +1,5 @@
 CREATE DEFINER=`mnt`@`%` PROCEDURE `blockstatisticsproc`()
-BEGIN
+label:BEGIN
 DECLARE done INT DEFAULT 0; 
 declare startState int default 10;
 declare i int;
@@ -7,11 +7,16 @@ declare blockCount int;
 declare reward_address1 varchar(255);
 declare reward_date1 varchar(255);
 declare amount1 int ;
+declare addressCount int;
 declare cur CURSOR for select reward_address,reward_date ,count(id) as amount   from(select * from  (
 select id , reward_address , FROM_UNIXTIME(time,'%Y-%m-%d') as reward_date  from block where type = 'primary-dpos') a where  datediff(now(), reward_date ) < 2)b
 group by   reward_address, reward_date order by reward_date ,reward_address;
 DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1; 
 set blockCount = 1;
+ select count(reward_address) into addressCount from block where `type`='primary-dpos' and datediff(now(),  FROM_UNIXTIME(time,'%Y-%m-%d')) < 2;
+ if 0= addressCount then 
+ leave label;
+ end if; 
  OPEN cur;   
  REPEAT 
 FETCH  cur INTO reward_address1, reward_date1, amount1; 
