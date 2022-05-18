@@ -244,6 +244,21 @@ CREATE TABLE `mnt_bsc` (
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+DROP TABLE IF EXISTS `reward`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `reward` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `vote` decimal(40,18) DEFAULT NULL,
+  `extend` decimal(40,18) DEFAULT NULL,
+  `height` int(11) DEFAULT NULL,
+  `time` int(11) DEFAULT NULL,
+  `txid` varchar(70) DEFAULT NULL,
+  `addr` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 --
 -- Dumping data for table `mnt_bsc`
 --

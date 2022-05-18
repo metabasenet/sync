@@ -9,6 +9,7 @@ from binascii import hexlify, unhexlify
 import config
 import attach
 import utils
+import decimal
 
 url = config.url
 connection = pymysql.connect(host=config.host, port=config.port, user=config.user, password=config.password, db=config.db)
@@ -95,6 +96,13 @@ def InsertTx(block_id,tx,cursor,height):
     if tx["type"] == 'defi-relation':
         sql = "insert relation(upper,lower,txid,created_at) value(%s,%s,%s,%s)"
         cursor.execute(sql,[tx["from"],tx["to"],tx["txid"],tx["time"]])
+
+    if tx["type"] == 'defi-reward':
+        vote = int(tx['data'][-64:],16) 
+        vote = decimal.Decimal(vote) / decimal.Decimal(10**18)
+        extend = decimal.Decimal(tx["amount"]) - vote
+        sql = 'insert reward(vote,extend,height,`time`,txid,addr)value(%s,%s,%s,%s,%s,%s)'
+        cursor.execute(sql,[vote,extend,height,tx['time'],tx['txid'],tx['to']])
 
     
 def RollBACK(block_hash):
