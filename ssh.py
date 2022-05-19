@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from sshtunnel import SSHTunnelForwarder
-import time
 
- 
+from sshtunnel import SSHTunnelForwarder
+import time 
+#sudo pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple pip -U
+#sudo pip3 install sshtunnel -i https://pypi.tuna.tsinghua.edu.cn/simple
+
 local_ip = '0.0.0.0'
 local_port = 3306
 
- 
 remote_ip = '124.221.253.93'
 remote_port = 3306
 
- 
 user_name = 'ubuntu'
 #user_pass = '1234qwer'
-ssh_file = '/home/zdw/.ssh/keys/hah'
+ssh_file = '~/.ssh/keys/hah'
 
 with SSHTunnelForwarder(
     (remote_ip, 22),    # 22 is remote ssh service port
@@ -41,6 +41,3 @@ with SSHTunnelForwarder(
         time.sleep(60)
         #input("Press enter to end the current service.")
     #server.close()
-#sudo  pip3 install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple
-#sudo pip3 install setuptools-rust -i https://pypi.tuna.tsinghua.edu.cn/simple
-#sudo pip3 install sshtunnel  -i https://pypi.tuna.tsinghua.edu.cn/simple
