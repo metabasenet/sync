@@ -3,18 +3,18 @@
 from sshtunnel import SSHTunnelForwarder
 import time
 
- # 本地提供服务的IP和端口
+ 
 local_ip = '0.0.0.0'
 local_port = 3306
 
-# 远程服务器提供的IP和端口
-remote_ip = '119.8.55.78'
+ 
+remote_ip = '124.221.253.93'
 remote_port = 3306
 
-# 登录用户名称
-user_name = 'zos'
+ 
+user_name = 'ubuntu'
 #user_pass = '1234qwer'
-ssh_file = '/home/shang/.ssh/keys/id_rsa_zos'
+ssh_file = '/home/zdw/.ssh/keys/hah'
 
 with SSHTunnelForwarder(
     (remote_ip, 22),    # 22 is remote ssh service port
@@ -41,3 +41,6 @@ with SSHTunnelForwarder(
         time.sleep(60)
         #input("Press enter to end the current service.")
     #server.close()
+#sudo  pip3 install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple
+#sudo pip3 install setuptools-rust -i https://pypi.tuna.tsinghua.edu.cn/simple
+#sudo pip3 install sshtunnel  -i https://pypi.tuna.tsinghua.edu.cn/simple
