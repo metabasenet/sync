@@ -229,7 +229,7 @@ DROP TABLE IF EXISTS `mnt_bsc`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mnt_bsc` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `mnt_txid` varchar(70) DEFAULT NULL,
+  `mnt_txid` varchar(128) DEFAULT NULL,
   `bsc_txid` varchar(70) DEFAULT NULL,
   `from` varchar(70) DEFAULT NULL,
   `value` decimal(50,20) DEFAULT NULL,

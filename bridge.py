@@ -48,8 +48,9 @@ if __name__ == '__main__':
                         "params": {
                             "from": bridge_addr,
                             "to": obj[1],
-                            "amount": obj[0]
+                            "amount": str(obj[0])
                         }}
+                print('data',data);
                 ret = requests.post(config.url, json=data)
                 txid = ret.text.strip()
                 ts = int(time.time())
