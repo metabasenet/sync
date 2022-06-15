@@ -10,7 +10,8 @@ import pymysql
 def Update():
     conn = pymysql.connect(host=config.host, port=config.port, user=config.user, password=config.password, db=config.db)
     cursor = conn.cursor()
-    url = 'https://dncapi.fxhapp.com/api/coin/web-coinrank?page=1&type=-1&pagesize=50&webp=1'
+    #url = 'https://dncapi.fxhapp.com/api/coin/web-coinrank?page=1&type=-1&pagesize=50&webp=1'
+    url ='https://shangqingdong.work/bsc/'
     response = requests.get(url=url)
     objs = json.loads(response.text)
     sqls = []
