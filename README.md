@@ -1,5 +1,8 @@
 ## setup db
 ```bash
+ 
+sudo apt install nginx   --nginx  setup
+
 sudo apt install mysql-server
 sudo mysql -u root
 mysql> use mysql;

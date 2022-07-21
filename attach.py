@@ -150,13 +150,13 @@ def rankstat():
         totalMined = ret[0] * 730 + 200000000
         sql = "SELECT t.addr,SUM(i) - SUM(o) as total from (SELECT `from` as addr,SUM(amount + fee) as o, 0 as i FROM `tx` where `from` != '000000000000000000000000000000000000000000000000000000000' GROUP BY `from` \
             union SELECT `to` as addr, 0 as o, SUM(amount) as i FROM `tx` GROUP BY `to`) t GROUP BY addr ORDER BY total desc LIMIT 100;"
-        cursor.execute("DELETE FROM rank")
+        cursor.execute("DELETE FROM `rank`")
         cursor.execute(sql)
         ret = cursor.fetchall()
         ranking = 1
         for row in ret:
             percent = row[1] / totalMined
-            sql = "INSERT INTO rank(address,balance,yield,ranking) VALUES('%s',%f,%f,%d)" % (row[0], row[1],percent,ranking)
+            sql = "INSERT INTO `rank`(address,balance,yield,ranking) VALUES('%s',%f,%f,%d)" % (row[0], row[1],percent,ranking)
             ranking = ranking + 1
             cursor.execute(sql)
         connection.commit()

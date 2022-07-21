@@ -109,11 +109,11 @@ def RollBACK(block_hash):
     with connection.cursor() as cursor:
         sql = "update block set is_useful = 0 where `hash` = '%s'" % block_hash
         cursor.execute(sql)
-        sql = "SELECT txid from Tx where block_hash = '%s' ORDER BY id desc" % block_hash
+        sql = "SELECT txid from tx where block_hash = '%s' ORDER BY id desc" % block_hash
         cursor.execute(sql)
         rows = cursor.fetchall()
         for row in rows:
-            sql = "Delete from Tx where txid = '%s'" % row[0]
+            sql = "Delete from tx where txid = '%s'" % row[0]
             cursor.execute(sql)
         connection.commit()
 
@@ -152,7 +152,7 @@ def GetEndData():
         return cursor.fetchone()
 
 def GetPrev(b_hash):
-    sql = "SELECT b2.`hash`,b2.prev_hash,b2.height from Block b1 inner JOIN Block b2 on b1.prev_hash = b2.`hash` where b1.`hash` = '%s'" % b_hash
+    sql = "SELECT b2.`hash`,b2.prev_hash,b2.height from block b1 inner JOIN block b2 on b1.prev_hash = b2.`hash` where b1.`hash` = '%s'" % b_hash
     with connection.cursor() as cursor :
         cursor.execute(sql)
         connection.commit()
