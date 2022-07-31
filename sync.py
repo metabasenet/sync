@@ -374,7 +374,8 @@ if __name__ == '__main__':
     #print(GetVote(data))
     #print("owner:",owner)
     #print("inviter:",inviter)   
-    #insertRewardDetail
+    #insertRewardDetail()
+    #exit()
     while True:
         height = Getforkheight()
         if height > 0:
