@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from distutils.log import debug
+from colorama import Cursor
 import requests
 import json
 import pymysql
@@ -285,15 +287,94 @@ def Run():
             ExecTask(blockHash) 
         else:
             print("getblockhash error:",obj)   
-            time.sleep(3)    
-# 
+            time.sleep(3)
+def insertRewardDetail():     
+   
+    with connection.cursor() as cursor:
+        sql="select id,vote,extend,height,time,txid,addr  from  reward where flag is null or flag !=1" 
+        #sql="select id,vote,extend,height,time,txid,addr  from  reward where id =7 or id=8" 
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        for row in rows:
+            #print(row[0])
+            #print(row[6])
+            
+            if (row[6][0:3] =="20w"):
+                data={"id":2,
+                "method":"validateaddress",
+                "jsonrpc":"2.0",
+                "params":{"address":row[6]}}
+                response = requests.post(url, json=data)
+                obj = json.loads(response.text)
+             
+                owner=obj["result"]["addressdata"]["templatedata"]["vote"]["owner"]
+                relationObj=owner
+                parent=owner
+                addressList=[]
+                #print(row[0])
+                #print(relationObj)
+                addressList.append(parent) 
+                while "error" not in relationObj:                                                   
+                    relationData={"id":1,
+                    "method":"getdefirelation",
+                    "jsonrpc":"2.0","params":
+                    {"address":parent}}
+                    relationResponse=requests.post(url,json=relationData)
+                    relationObj=json.loads(relationResponse.text)
+                    if "error" not in relationObj:                      
+                        parent=relationObj["result"]["parent"]
+                        if parent !="000000000000000000000000000000000000000000000000000000000":
+                            addressList.append(parent) 
+                
+                print(addressList)
+                updateRewardDetail(row[0],row[4],addressList,row[3],float(row[1])+ float(row[2]))  
+                #time.sleep(10)
+            elif(row[6][0:3]=="20m"):
+                with connection.cursor() as cursor:
+                    updateSql="update reward set flag =1 where id=%s"
+                    cursor.execute(updateSql,[id])
+                connection.commit()
+            else:
+                addressList=[]
+                addressList.append(row[6])
+                updateRewardDetail(row[0],row[4],addressList,row[3],float(row[1])+ float(row[2]))
+                print(row[6][0:3])  
+                #time.sleep(10)     
+        #print(obj)
+def updateRewardDetail(id,time,addressList,height,profit):
+    for address in addressList:
+        with connection.cursor() as cursor:
+            #print(address)
+            blockHeight=(int(height) // 2880) * 2880
+            selectSql = "SELECT id,profit, height, addr from rewarddetail where addr = %s and `height`=%s"
+            cursor.execute(selectSql,[address,blockHeight])
+            row= cursor.fetchone()
+            # print(address)
+            # print(blockHeight)
+            # print(row)
+            if row is not None:
+                #update
+                oldProfit=row[1]
+                print (oldProfit)
+                updateSql="update rewarddetail set profit=%s where addr=%s and height=%s"
+                cursor.execute(updateSql,[oldProfit+Decimal(profit),address,blockHeight])
+            else:
+                #insert
+                insertSql="insert into rewarddetail(profit, height ,time ,addr) values(%s,%s,%s,%s)"
+                cursor.execute(insertSql,[profit,blockHeight,time,address])
+        connection.commit()
+    with connection.cursor() as cursor:
+        updateSql="update reward set flag =1 where id=%s"
+        cursor.execute(updateSql,[id])
+    connection.commit()
 # certification dpos 
 # invest-reward 
 if __name__ == '__main__':
     #data = "010101460205000b5d642a6844d36b84b00c72c01e221cbb7421c03069888e828ec461e9400129136f7de86c7a7c13a404cb2401e112f53b5df6c4ac11916c83312aa4c3aff300000000"
     #print(GetVote(data))
     #print("owner:",owner)
-    #print("inviter:",inviter)
+    #print("inviter:",inviter)   
+    #insertRewardDetail
     while True:
         height = Getforkheight()
         if height > 0:
@@ -310,3 +391,4 @@ if __name__ == '__main__':
             print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),"wait task 3s ...")
             time.sleep(3)
             attach.Task()
+        insertRewardDetail()

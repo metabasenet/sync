@@ -273,3 +273,17 @@ CREATE TABLE `reward` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2022-05-04  8:56:11
+
+
+
+DROP TABLE IF EXISTS `rewarddetail`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `rewarddetail` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `profit` decimal(40,18) DEFAULT NULL, 
+  `height` int(11) DEFAULT NULL,
+  `time` int(11) DEFAULT NULL, 
+  `addr` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
