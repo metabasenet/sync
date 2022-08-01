@@ -378,6 +378,7 @@ if __name__ == '__main__':
     #insertRewardDetail()
     #exit()
     while True:
+        insertRewardDetail()
         height = Getforkheight()
         if height > 0:
             obj = Getblockhash(height)
@@ -393,4 +394,4 @@ if __name__ == '__main__':
             print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),"wait task 3s ...")
             time.sleep(3)
             attach.Task()
-        insertRewardDetail()
+        
