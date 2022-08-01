@@ -311,29 +311,34 @@ def insertRewardDetail():
                 relationObj=owner
                 parent=owner
                 addressList=[]
-                #print(row[0])
-                #print(relationObj)
+                print(row[0])
+                print(relationObj)
                 addressList.append(parent) 
-                while "error" not in relationObj:                                                   
+                while "error" not in relationObj :   
+
                     relationData={"id":1,
                     "method":"getdefirelation",
                     "jsonrpc":"2.0","params":
                     {"address":parent}}
+                    print(relationData)
                     relationResponse=requests.post(url,json=relationData)
                     relationObj=json.loads(relationResponse.text)
                     if "error" not in relationObj:                      
                         parent=relationObj["result"]["parent"]
                         if parent !="000000000000000000000000000000000000000000000000000000000":
-                            addressList.append(parent) 
+                            if parent not in addressList:
+                                addressList.append(parent) 
+                            else:
+                                break
                 
                 print(addressList)
                 updateRewardDetail(row[0],row[4],addressList,row[3],float(row[1])+ float(row[2]))  
                 #time.sleep(10)
             elif(row[6][0:3]=="20m"):
-                # with connection.cursor() as cursor:
-                #     updateSql="update reward set flag =1 where id=%s"
-                #     cursor.execute(updateSql,[id])
-                # connection.commit()
+                with connection.cursor() as cursor:
+                    updateSql="update reward set flag =1 where id=%s"
+                    cursor.execute(updateSql,[row[0]])
+                connection.commit()
                 print(row[6])
             else:
                 addressList=[]
@@ -378,7 +383,6 @@ if __name__ == '__main__':
     #insertRewardDetail()
     #exit()
     while True:
-        #insertRewardDetail()
         height = Getforkheight()
         if height > 0:
             obj = Getblockhash(height)
@@ -394,4 +398,4 @@ if __name__ == '__main__':
             print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),"wait task 3s ...")
             time.sleep(3)
             attach.Task()
-        
+        insertRewardDetail()
