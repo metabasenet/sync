@@ -378,7 +378,7 @@ if __name__ == '__main__':
     #insertRewardDetail()
     #exit()
     while True:
-        insertRewardDetail()
+        #insertRewardDetail()
         height = Getforkheight()
         if height > 0:
             obj = Getblockhash(height)
