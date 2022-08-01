@@ -334,6 +334,7 @@ def insertRewardDetail():
                 #     updateSql="update reward set flag =1 where id=%s"
                 #     cursor.execute(updateSql,[id])
                 # connection.commit()
+                print(row[6])
             else:
                 addressList=[]
                 addressList.append(row[6])
