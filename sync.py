@@ -330,10 +330,10 @@ def insertRewardDetail():
                 updateRewardDetail(row[0],row[4],addressList,row[3],float(row[1])+ float(row[2]))  
                 #time.sleep(10)
             elif(row[6][0:3]=="20m"):
-                with connection.cursor() as cursor:
-                    updateSql="update reward set flag =1 where id=%s"
-                    cursor.execute(updateSql,[id])
-                connection.commit()
+                # with connection.cursor() as cursor:
+                #     updateSql="update reward set flag =1 where id=%s"
+                #     cursor.execute(updateSql,[id])
+                # connection.commit()
             else:
                 addressList=[]
                 addressList.append(row[6])
