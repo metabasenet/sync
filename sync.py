@@ -373,6 +373,18 @@ def updateRewardDetail(id,time,addressList,height,profit):
         updateSql="update reward set flag =1 where id=%s"
         cursor.execute(updateSql,[id])
     connection.commit()
+
+def updatePoolVoteCount():
+    with connection.cursor() as cursor:
+        selectSql="select dpos_in , count(id) as count  from tx where `type`='token' and dpos_in is not null group by dpos_in "
+        cursor.execute(selectSql,[])
+        rows=cursor.fetchall()
+        for row in rows:
+            print(row[0])
+            print(row[1])
+            updateSql="update `pool` set vote_count=%s where address=%s"
+            cursor.execute(updateSql,[row[1],row[0]])
+        connection.commit()
 # certification dpos 
 # invest-reward 
 if __name__ == '__main__':
@@ -381,6 +393,7 @@ if __name__ == '__main__':
     #print("owner:",owner)
     #print("inviter:",inviter)   
     #insertRewardDetail()
+    #updatePoolVoteCount()
     #exit()
     while True:
         height = Getforkheight()
@@ -399,3 +412,4 @@ if __name__ == '__main__':
             time.sleep(3)
             attach.Task()
         insertRewardDetail()
+        updatePoolVoteCount()

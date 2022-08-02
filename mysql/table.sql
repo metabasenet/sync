@@ -287,3 +287,5 @@ CREATE TABLE `rewarddetail` (
   `addr` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+alter table `pool` add column vote_count int;
