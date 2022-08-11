@@ -289,3 +289,16 @@ CREATE TABLE `rewarddetail` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 alter table `pool` add column vote_count int;
+
+
+CREATE TABLE `app_version` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `create_time` datetime DEFAULT NULL, 
+  `update_time` datetime DEFAULT NULL,
+  `version_code` int(11) DEFAULT NULL, 
+  `version_name` varchar(64) DEFAULT NULL,
+  `update_log` varchar(2000) default null,
+  `apk_url` varchar(256) default null,
+  `token` varchar(256) default null,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
