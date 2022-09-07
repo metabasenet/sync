@@ -9,8 +9,8 @@ import requests
 conn = pymysql.connect(host=config.host, port=config.port, user=config.user, password=config.password, db=config.db)
 
 
-bridge_addr = '1231kgws0rhjtfewv57jegfe5bp4dncax60szxk8f4y546jsfkap3t5ws'
-
+#bridge_addr = '1231kgws0rhjtfewv57jegfe5bp4dncax60szxk8f4y546jsfkap3t5ws'
+bridge_addr = '20m07b974wdrzrwtxghteg223fae28awc3srnvp4ypxg87p0mf5hrtr6t'
 
 except_addr = '000000000000000000000000000000000000000000000000000000000'
 
