@@ -293,8 +293,8 @@ alter table `pool` add column vote_count int;
 
 CREATE TABLE `app_version` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `create_time` datetime DEFAULT NULL, 
-  `update_time` datetime DEFAULT NULL,
+  `create_time` varchar(64) DEFAULT NULL, 
+  `update_time` varchar(64) DEFAULT NULL,
   `version_code` int(11) DEFAULT NULL, 
   `version_name` varchar(64) DEFAULT NULL,
   `update_log` varchar(2000) default null,
@@ -302,3 +302,6 @@ CREATE TABLE `app_version` (
   `token` varchar(256) default null,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+ALTER TABLE app_version DEFAULT CHARACTER SET utf8mb4;
+alter table app_version convert to character set utf8mb4 collate utf8mb4_bin;
