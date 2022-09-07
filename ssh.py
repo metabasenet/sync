@@ -9,12 +9,12 @@ import time
 local_ip = '0.0.0.0'
 local_port = 3306
 
-remote_ip = '124.221.253.93'
+remote_ip = '18.163.119.181'
 remote_port = 3306
 
 user_name = 'ubuntu'
 #user_pass = '1234qwer'
-ssh_file = '~/.ssh/keys/hah'
+ssh_file = '/home/ubuntu/.ssh/metabasenet.pem'
 
 with SSHTunnelForwarder(
     (remote_ip, 22),    # 22 is remote ssh service port
