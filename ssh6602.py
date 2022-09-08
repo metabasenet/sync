@@ -7,7 +7,7 @@ import time
 #sudo pip3 install sshtunnel -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 local_ip = '0.0.0.0'
-local_port = 6602
+local_port = 6603
 
 remote_ip = '18.163.119.181'
 remote_port = 6602
