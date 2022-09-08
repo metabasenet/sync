@@ -5,12 +5,13 @@ import pymysql
 import config
 import time
 import requests
-
+import json
 conn = pymysql.connect(host=config.host, port=config.port, user=config.user, password=config.password, db=config.db)
 
 
 #bridge_addr = '1231kgws0rhjtfewv57jegfe5bp4dncax60szxk8f4y546jsfkap3t5ws'
 bridge_addr = '184aph9nn415fam29hwmk5h19kc1724ysqjsfm8j1gndm3j32ywyvj796'
+
 
 except_addr = '000000000000000000000000000000000000000000000000000000000'
 
@@ -43,6 +44,7 @@ if __name__ == '__main__':
             sql = 'select mnt_bsc.`value`,addr.mnt_addr as `to`,mnt_bsc.id from mnt_bsc inner join addr on addr.eth_addr = mnt_bsc.`from` where mnt_bsc.state is null and mnt_bsc.`type` = 1'
             cursor.execute(sql)
             result = cursor.fetchall()
+               
             for obj in result:
                 data = {"id":1,
                         "method":"sendfrom",
@@ -52,14 +54,17 @@ if __name__ == '__main__':
                             "to": obj[1],
                             "amount": str(obj[0])
                         }}
-                print('data',data);
+                print('data',data)
                 ret = requests.post(config.url, json=data)
-                txid = ret.text.strip()
+                print('ret',json.loads(ret.text))  
+                #txid = ret.text.strip().result
+
+                txid = json.loads(ret.text)["result"]        
                 ts = int(time.time())
                 sql = f"update mnt_bsc set mnt_txid = '{txid}', state = 1, bsc_time = {ts} where id = {obj[2]}"
                 cursor.execute(sql)
                 print('bsc -> bbc OK.')
             conn.commit()
-        print('time.sleep(10)...')
+          
         time.sleep(10)
         
