@@ -17,6 +17,10 @@ except_addr = '000000000000000000000000000000000000000000000000000000000'
 if __name__ == '__main__':
     while True:
         ## add
+        testdata={"id":4,"method":"getforkheight","jsonrpc":"2.0","params":{}}
+        ret = requests.post(config.url, json=testdata)
+        print('ret',ret)
+        exit()
         with conn.cursor() as cursor :
             ts = time.time() - 100
             sql = f"select txid, `from`, amount from tx where `to` = '{bridge_addr}' and `from` != '{except_addr}' and transtime < {ts} order by id desc limit 1000;"
