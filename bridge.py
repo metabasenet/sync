@@ -10,7 +10,7 @@ conn = pymysql.connect(host=config.host, port=config.port, user=config.user, pas
 
 
 #bridge_addr = '1231kgws0rhjtfewv57jegfe5bp4dncax60szxk8f4y546jsfkap3t5ws'
-bridge_addr = '20m07b974wdrzrwtxghteg223fae28awc3srnvp4ypxg87p0mf5hrtr6t'
+bridge_addr = '184aph9nn415fam29hwmk5h19kc1724ysqjsfm8j1gndm3j32ywyvj796'
 
 except_addr = '000000000000000000000000000000000000000000000000000000000'
 
