@@ -72,6 +72,13 @@ def InsertTx(block_id,tx,cursor,height):
     if tx["type"] == "certification":
         return
     #print("txid:",tx["txid"])
+    dotindex=0
+    if tx["amount"].find('.')==-1:
+        dotindex=len(tx["amount"])
+    else:
+        dotindex = tx["amount"].index('.')
+    if dotindex > 10:
+        return
     in_money = Decimal(0)
     dpos_in = None
     client_in = None
