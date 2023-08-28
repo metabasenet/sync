@@ -1,13 +1,12 @@
 ## setup db
 ```bash
- 
-sudo apt install nginx   --nginx  setup
-
+sudo apt install nginx
 sudo apt install mysql-server
 sudo mysql -u root
 mysql> use mysql;
 mysql> CREATE USER 'mnt'@'localhost' IDENTIFIED BY '1234qwer';
 mysql> GRANT ALL ON *.* TO 'mnt'@'localhost';
+mysql> ALTER USER 'mnt'@'localhost' IDENTIFIED WITH mysql_native_password BY '1234qwer';
 mysql> FLUSH PRIVILEGES;
 mysql> select User,plugin,host from user;
 +------------------+-----------------------+-----------+
@@ -27,19 +26,4 @@ sudo apt install mysql-workbench
 ```bash
 vim config.py
 ./run.sh
-```
-
-## bridge by uniswap 
-```bash
-./bridge.py
-```
-
-## update price
-```bash
-./update_price.py
-```
-
-## update program
-```bash
-rsync -avz ../sync mnt-sh:/home/ubuntu/mnt
 ```
