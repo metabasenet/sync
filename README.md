@@ -24,6 +24,7 @@ sudo apt install mysql-workbench
 
 ## sync 
 ```bash
+pip install web3
 vim config.py
 ./run.sh
 ```

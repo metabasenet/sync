@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) ***
 
-rpcurl = 'http://127.0.0.1/rpc'
+rpcurl = 'http://47.115.211.205/rpc'
 
 host = '127.0.0.1'
 port = 3306
