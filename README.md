@@ -1,3 +1,7 @@
+## mnt data sync
+* use [web3py](https://web3py.readthedocs.io/en/stable/index.html) dev
+* ssh -4NfL 30304:127.0.0.1:30303 mnt (test)
+
 ## setup db
 ```bash
 sudo apt install nginx
@@ -21,10 +25,9 @@ mysql> select User,plugin,host from user;
 5 rows in set (0.00 sec)
 sudo apt install mysql-workbench
 ```
-
 ## sync 
 ```bash
-pip install web3
+pip install web3==6.9.0
 vim config.py
 ./run.sh
 ```

@@ -5,23 +5,26 @@ import config
 import pymysql
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
-# import json
 from decimal import Decimal
 import time
 
+import asyncio
+from web3.middleware import async_geth_poa_middleware
+from web3 import AsyncWeb3
+from web3.providers import WebsocketProviderV2
 
-web3 = Web3(Web3.HTTPProvider(config.rpcurl))
+web3 = Web3(Web3.WebsocketProvider(config.rpcws))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 connection = pymysql.connect(host=config.host, port=config.port,
                              user=config.user, password=config.password, db=config.db)
 
 
-def getDbNumber():
+def get_db_number():
     with connection.cursor() as cursor:
         sql = "select ifnull(max(`number`) + 1,0) as `number` from `block`"
         cursor.execute(sql)
-        return cursor.fetchone()
+        return cursor.fetchone()[0]
 
 
 def sync(begin, end):
@@ -51,16 +54,34 @@ def sync(begin, end):
         connection.commit()
 
 
-bn = getDbNumber()[0]
-while True:
-    bn1 = web3.eth.get_block_number()
-    if bn1 > bn + 5000:
-        print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), bn, bn1)
-        sync(bn, bn + 5000)
-        bn = bn + 5000
-    else:
-        print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), bn, bn1)
-        sync(bn, bn1)
-        break
+def sync_history():
+    bn = get_db_number()
+    while True:
+        bn_max = web3.eth.get_block_number()
+        if bn_max > bn + 5000:
+            print(time.strftime("%Y-%m-%d %H:%M:%S syncing",
+                  time.localtime()), f"from:{bn},to:{bn + 5000},max:{bn_max}")
+            sync(bn, bn + 5000)
+            bn = bn + 5000
+        else:
+            print(time.strftime("%Y-%m-%d %H:%M:%S sync_complete",
+                  time.localtime()), f"from:{bn},to:{bn_max}")
+            sync(bn, bn_max + 1)
+            break
 
-print('OK')
+
+async def subscription_newHeads():
+    async with AsyncWeb3.persistent_websocket(WebsocketProviderV2(config.rpcws)) as w3:
+        w3.middleware_onion.inject(async_geth_poa_middleware, layer=0)
+        subscription_id = await w3.eth.subscribe("newHeads")
+        while True:
+            async for block in w3.listen_to_websocket():
+                bn = get_db_number()
+                number = int(block.number, 16)
+                sync(bn, number + 1)
+                print(time.strftime("%Y-%m-%d %H:%M:%S subscribe",
+                      time.localtime()), f"from:{bn},to:{number}")
+        await w3.eth.unsubscribe(subscription_id)
+#print(web3.api)
+sync_history()
+asyncio.run(subscription_newHeads())

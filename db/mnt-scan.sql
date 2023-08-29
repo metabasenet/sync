@@ -137,8 +137,7 @@ CREATE TABLE `erc20transfe` (
   PRIMARY KEY (`hash`),
   KEY `addr` (`addr`),
   KEY `from` (`from`),
-  KEY `to` (`to`),
-  CONSTRAINT `fk_erc20transfe_1` FOREIGN KEY (`hash`) REFERENCES `tx` (`hash`)
+  KEY `to` (`to`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -159,14 +158,18 @@ DROP TABLE IF EXISTS `tx`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `tx` (
-  `hash` varchar(66) NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
+  `hash` varchar(66) DEFAULT NULL,
   `number` int DEFAULT NULL,
   `from` varchar(42) DEFAULT NULL,
   `to` varchar(42) DEFAULT NULL,
   `value` decimal(40,18) DEFAULT NULL,
   `method` varchar(64) DEFAULT NULL,
   `fee` decimal(40,18) DEFAULT NULL,
-  PRIMARY KEY (`hash`),
+  PRIMARY KEY (`id`),
+  KEY `hash` (`hash`),
+  KEY `from` (`from`),
+  KEY `to` (`to`),
   KEY `fk_tx_1_idx` (`number`),
   CONSTRAINT `fk_tx_1` FOREIGN KEY (`number`) REFERENCES `block` (`number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -198,4 +201,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-08-28 16:45:21
+-- Dump completed on 2023-08-29  8:13:49
