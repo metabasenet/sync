@@ -5,6 +5,7 @@ import { TransactionReceipt } from './models/transaction_receipt.js';
 import { Contract } from "./models/contract.js";
 import { Sequelize } from 'sequelize';
 import { config } from './database/config.js';
+import fs from "fs";
 
 const provider = new ethers.JsonRpcProvider("https://test.metabasenet.site/rpc");
 let blockNumber = await provider.getBlockNumber();
