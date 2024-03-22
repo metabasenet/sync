@@ -2,5 +2,6 @@ export const config = {
     host: "127.0.0.1",
     database: "eth",
     username: "root",
-    password: "123456"
+    password: "123456",
+    timezone: "+00:00"
 }

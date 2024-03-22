@@ -5,7 +5,7 @@ import { config } from './config.js';
 export const sequelize = new Sequelize(config.database, config.username, config.password, {
     dialect: 'mysql',
     host: config.host,
-    timezone: '+08:00',
+    timezone: config.timezone,
     pool: {
         max: 5,
         min: 0,
