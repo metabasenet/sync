@@ -7,7 +7,7 @@ const provider = new ethers.JsonRpcProvider("https://test.metabasenet.site/rpc")
 
 function main() {
     sqlHelper.init();
-    const selectSql = "SELECT DISTINCT `from` FROM `transaction`";
+    const selectSql = "SELECT  DISTINCT address  from (SELECT DISTINCT `from` AS address FROM `transaction` UNION SELECT DISTINCT `to` AS address FROM `transaction`) A";
     sqlHelper.readDatabase(selectSql, getAddressCallback);
 
     function getAddressCallback(err, result) {

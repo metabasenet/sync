@@ -9,8 +9,7 @@ import fs from "fs";
 
 const provider = new ethers.JsonRpcProvider("https://test.metabasenet.site/rpc");
 let blockNumber = await provider.getBlockNumber();
-console.log(blockNumber);
-
+let endNumber = 40000;
 const asyncStep = 50;
 
 const sequelize = new Sequelize(config.database, config.username, config.password, {
@@ -30,15 +29,14 @@ console.log(block)
 let startNumber = block[0][0].number;
 
 console.log("Start number:" + startNumber);
-for (let i = Number(startNumber); i <= blockNumber; i = i + asyncStep) {
-
+for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
     console.log("sync numberSyncing blocks:" + i);
     let blockInfoArray = [];
     let transactionInfoArray = [];
     let transactionReceiptInfoArray = [];
     let contartInfoArray = [];
     for (let k = i; k < i + asyncStep; k++) {
-        if (k > blockNumber) {
+        if (k > endNumber) {
             break;
         }
 
@@ -135,6 +133,64 @@ for (let i = Number(startNumber); i <= blockNumber; i = i + asyncStep) {
     }
     if (contartInfoArray.length > 0) {
         bulkCreateContract(contartInfoArray);
+    }
+}
+
+
+//sync contract transaction history info
+const contractAddressList = await Contract.findAll({
+    attributes: ['contractAddress']
+})
+for (let i in contractAddressList) {
+    console.log(contractAddressList[i].contractAddress)
+    const eventAbi = [
+        "event Transfer(address indexed from, address indexed to, uint256 value)"
+    ];
+    const contract = new ethers.Contract(contractAddressList[i].contractAddress, eventAbi, provider);
+    let blockNumber = await provider.getBlockNumber();
+    try {
+        const transferEvents = await contract.queryFilter('Transfer', 0, blockNumber);
+        if (transferEvents !== undefined && transferEvents.length > 0) {
+            for (let i in transferEvents) {
+                console.log(transferEvents[1]);
+                await TransactionErc20.create({
+                    transactionHash: transferEvents[i].transactionHash,
+                    contractAddress: transferEvents[i].address,
+                    blockHash: transferEvents[i].blockHash,
+                    blockNumber: transferEvents[i].blockNumber,
+                    from: transferEvents[i].topics[1],
+                    to: transferEvents[i].topics[2],
+                    value: parseInt(transferEvents[i].data, 16)
+                }).then(() => {
+                    console.log("erc20 information save successfully!");
+                }).catch(error => {
+                    console.log("erc20 information save failed!\n" + error);
+                })
+
+                console.log(transferEvents[i].topics)
+            }
+        }
+    } catch (e) {
+        console.log(e.message)
+    }
+}
+
+//update platform balance 
+sqlHelper.init();
+const selectSql = "SELECT  DISTINCT address  from (SELECT DISTINCT `from` AS address FROM `transaction` UNION SELECT DISTINCT `to` AS address FROM `transaction`) A";
+sqlHelper.readDatabase(selectSql, getAddressCallback);
+
+function getAddressCallback(err, result) {
+    if (err) {
+        console.log(err.message);
+    } else {
+        for (let i in result) {
+            provider.getBalance(result[i].from).then(balance => {
+                const address = result[i].from;
+                let insertSql = `REPLACE  INTO platform_balance(address, balance, updateTime) VALUES ('${address}', ${balance}, ?)`;
+                sqlHelper.writeDatabase(insertSql, new Date());
+            })
+        }
     }
 }
 

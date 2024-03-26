@@ -4,11 +4,26 @@ import { Transaction } from './models/transaction.js';
 import { TransactionReceipt } from './models/transaction_receipt.js';
 import { Contract } from "./models/contract.js";
 import fs from "fs";
+import { TransactionErc20 } from "./models/transaction_erc20.js"
+import { Sequelize } from 'sequelize';
+import { config } from "./database/config.js";
 
+const sequelize = new Sequelize(config.database, config.username, config.password, {
+    dialect: 'mysql',
+    host: config.host,
+    timezone: config.timezone,
+    pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+    },
+});
 
 const provider = new ethers.JsonRpcProvider("https://test.metabasenet.site/rpc");
 provider.on("block", async (blockNumber) => {
     let blockInfo = await provider.getBlock(blockNumber);
+    //sync block
     await Block.create({
         number: blockInfo.number,
         hash: blockInfo.hash,
@@ -26,9 +41,7 @@ provider.on("block", async (blockNumber) => {
         console.log("Block save failed!\n" + error);
     })
 
-    console.log(blockInfo.transactions)
-
-
+    //sync transactions
     for (let i in blockInfo.transactions) {
         let transactionInfo = await provider.getTransaction(blockInfo.transactions[i])
         await Transaction.create({
@@ -53,6 +66,7 @@ provider.on("block", async (blockNumber) => {
         }).catch(error => {
             console.log("Transaction information save failed!\n" + error);
         })
+        //sync TransactionReceipt
         let transactionReceiptInfo = await provider.getTransactionReceipt(blockInfo.transactions[i]);
         await TransactionReceipt.create({
             transactionHash: transactionReceiptInfo.hash,
@@ -73,6 +87,7 @@ provider.on("block", async (blockNumber) => {
             console.log("Transaction Receipt information saved failed!\n" + error);
         })
 
+        //sync create contract info
         if (transactionReceiptInfo.contractAddress != null) {
             const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));
             const contract = new ethers.Contract(transactionReceiptInfo.contractAddress, ERC20ABi, provider);
@@ -98,6 +113,67 @@ provider.on("block", async (blockNumber) => {
                 console.log("Transaction Receipt information saved failed!\n" + error);
             })
         }
-    }
+        //sync contrat transaction info 
+        if (transactionReceiptInfo.to != null) {
+            provider.getCode(transactionReceiptInfo.to).then(async code => {
+                //determine contract address
+                if (code.length > 4) {
+                    const eventAbi = [
+                        "event Transfer(address indexed from, address indexed to, uint256 value)"
+                    ];
+                    const contract = new ethers.Contract(transactionReceiptInfo.to, eventAbi, provider);
+                    try {
+                        console.log(blockNumber);
+                        const transferEvents = await contract.queryFilter('Transfer', blockNumber - 2, blockNumber);
+                        if (transferEvents !== undefined && transferEvents.length > 0) {
+       
+                            for (let i in transferEvents) {
+                                TransactionErc20.create({
+                                    transactionHash: transferEvents[i].transactionHash,
+                                    contractAddress: transferEvents[i].address,
+                                    blockHash: transferEvents[i].blockHash,
+                                    blockNumber: transferEvents[i].blockNumber,
+                                    from: transferEvents[i].topics[1],
+                                    to: transferEvents[i].topics[2],
+                                    value: parseInt(transferEvents[i].data, 16)
+                                }).then(() => {
+                                    console.log("erc20 information save successfully!");
+                                }).catch(error => {
+                                    console.log("erc20 information save failed!\n" + error);
+                                })
 
+                                console.log(transferEvents[i].topics)
+                            }
+                        }
+                    } catch (e) {
+                        console.log(e.message)
+                    }
+
+                }
+            });
+        }
+
+        //update balance
+        updateBalance(transactionReceiptInfo.from);
+        updateBalance(transactionReceiptInfo.to);
+
+    }
 })
+
+
+
+function updateBalance(address) {
+    if (address != null) {
+        provider.getCode(address).then(code => {
+            if (code.length <= 4) {
+                provider.getBalance(address).then(balance => {
+                    let sql = "REPLACE  INTO platform_balance(address, balance, updateTime) VALUES (:address, :balance, NOW())";
+                    sequelize.query(sql, {
+                        replacements: { address: address, balance: balance },
+                        type: Sequelize.QueryTypes.INSERT
+                    });
+                })
+            }
+        })
+    }
+}
