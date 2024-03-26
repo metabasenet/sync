@@ -38,6 +38,10 @@ for (let i = Number(startNumber); i <= blockNumber; i = i + asyncStep) {
     let transactionReceiptInfoArray = [];
     let contartInfoArray = [];
     for (let k = i; k < i + asyncStep; k++) {
+        if (k > blockNumber) {
+            break;
+        }
+
         let blockInfo = await provider.getBlock(k);
         const blockInfoModel = {
             number: blockInfo.number,
