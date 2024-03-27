@@ -1,8 +1,9 @@
 import { ethers } from "ethers";
 import { sqlHelper } from "./database/sqlHelper.js";
+import { RunConfig } from "./RunConfig.js";
 
 
-const provider = new ethers.JsonRpcProvider("https://test.metabasenet.site/rpc");
+const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl);
 
 
 function main() {
@@ -15,8 +16,8 @@ function main() {
             console.log(err.message);
         } else {
             for (let i in result) {
-                provider.getBalance(result[i].from).then(balance => {
-                    const address = result[i].from;
+                provider.getBalance(result[i].address).then(balance => {
+                    const address = result[i].address;
                     let insertSql = `REPLACE  INTO platform_balance(address, balance, updateTime) VALUES ('${address}', ${balance}, ?)`;
                     sqlHelper.writeDatabase(insertSql, new Date());
                 })

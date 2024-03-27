@@ -6,11 +6,14 @@ import { Contract } from "./models/contract.js";
 import { Sequelize } from 'sequelize';
 import { config } from './database/config.js';
 import fs from "fs";
+import { TransactionErc20 } from "./models/transaction_erc20.js";
+import { sqlHelper } from "./database/sqlHelper.js";
+import { RunConfig } from "./RunConfig.js";
 
-const provider = new ethers.JsonRpcProvider("https://test.metabasenet.site/rpc");
+const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl);
 let blockNumber = await provider.getBlockNumber();
-let endNumber = 40000;
-const asyncStep = 50;
+let endNumber = RunConfig.endNumber > 0 ? RunConfig.endNumber : blockNumber;
+const asyncStep = RunConfig.asyncStep;
 
 const sequelize = new Sequelize(config.database, config.username, config.password, {
     dialect: 'mysql',
@@ -24,9 +27,10 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
     },
 });
 
-const block = await sequelize.query("SELECT IFNULL(max(number)+1,0) as number FROM `block`");
-console.log(block)
-let startNumber = block[0][0].number;
+// const block = await sequelize.query("SELECT IFNULL(max(number)+1,0) as number FROM `block`");
+// console.log(block)
+// let startNumber = block[0][0].number;
+let startNumber = RunConfig.startNumber;
 
 console.log("Start number:" + startNumber);
 for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
@@ -147,27 +151,28 @@ for (let i in contractAddressList) {
         "event Transfer(address indexed from, address indexed to, uint256 value)"
     ];
     const contract = new ethers.Contract(contractAddressList[i].contractAddress, eventAbi, provider);
-    let blockNumber = await provider.getBlockNumber();
+    // let blockNumber = await provider.getBlockNumber();
     try {
-        const transferEvents = await contract.queryFilter('Transfer', 0, blockNumber);
+        const transferEvents = await contract.queryFilter('Transfer', 0, endNumber);
         if (transferEvents !== undefined && transferEvents.length > 0) {
-            for (let i in transferEvents) {
-                console.log(transferEvents[1]);
-                await TransactionErc20.create({
-                    transactionHash: transferEvents[i].transactionHash,
-                    contractAddress: transferEvents[i].address,
-                    blockHash: transferEvents[i].blockHash,
-                    blockNumber: transferEvents[i].blockNumber,
-                    from: transferEvents[i].topics[1],
-                    to: transferEvents[i].topics[2],
-                    value: parseInt(transferEvents[i].data, 16)
-                }).then(() => {
-                    console.log("erc20 information save successfully!");
-                }).catch(error => {
-                    console.log("erc20 information save failed!\n" + error);
-                })
-
-                console.log(transferEvents[i].topics)
+            let TransactionErc20ModelArray = [];
+            for (let i = 0; i <= transferEvents.length; i = i + asyncStep) {
+                for (let k = i; k < i + asyncStep; k++) {
+                    if (k >= transferEvents.length) {
+                        break;
+                    }
+                    const TransactionErc20Model = {
+                        transactionHash: transferEvents[k].transactionHash,
+                        contractAddress: transferEvents[k].address,
+                        blockHash: transferEvents[k].blockHash,
+                        blockNumber: transferEvents[k].blockNumber,
+                        from: transferEvents[k].topics[1],
+                        to: transferEvents[k].topics[2],
+                        value: parseInt(transferEvents[k].data, 16)
+                    }
+                    TransactionErc20ModelArray.push(TransactionErc20Model);
+                }
+                bulkCreateTransactionErc20(TransactionErc20ModelArray);
             }
         }
     } catch (e) {
@@ -185,11 +190,13 @@ function getAddressCallback(err, result) {
         console.log(err.message);
     } else {
         for (let i in result) {
-            provider.getBalance(result[i].from).then(balance => {
-                const address = result[i].from;
-                let insertSql = `REPLACE  INTO platform_balance(address, balance, updateTime) VALUES ('${address}', ${balance}, ?)`;
-                sqlHelper.writeDatabase(insertSql, new Date());
-            })
+            if (result[i].address != null) {
+                provider.getBalance(result[i].address).then(balance => {
+                    const address = result[i].address;
+                    let insertSql = `REPLACE  INTO platform_balance(address, balance, updateTime) VALUES ('${address}', ${balance}, ?)`;
+                    sqlHelper.writeDatabase(insertSql, new Date());
+                })
+            }
         }
     }
 }
@@ -223,5 +230,13 @@ async function bulkCreateContract(contartInfoArray) {
         console.log("Contract save successfully!");
     }).catch(error => {
         console.log("Contract save failed!\n" + error);
+    })
+}
+
+async function bulkCreateTransactionErc20(TransactionErc20ModelArray) {
+    await TransactionErc20.bulkCreate(TransactionErc20ModelArray).then(() => {
+        console.log("ERC20 transaction save successfully!");
+    }).catch(error => {
+        console.log("ERC20 transaction save failed!\n" + error);
     })
 }

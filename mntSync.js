@@ -7,6 +7,7 @@ import fs from "fs";
 import { TransactionErc20 } from "./models/transaction_erc20.js"
 import { Sequelize } from 'sequelize';
 import { config } from "./database/config.js";
+import { RunConfig } from "./RunConfig.js";
 
 const sequelize = new Sequelize(config.database, config.username, config.password, {
     dialect: 'mysql',
@@ -20,8 +21,9 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
     },
 });
 
-const provider = new ethers.JsonRpcProvider("https://test.metabasenet.site/rpc");
+const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl);
 provider.on("block", async (blockNumber) => {
+    console.log(blockNumber)
     let blockInfo = await provider.getBlock(blockNumber);
     //sync block
     await Block.create({
@@ -34,7 +36,9 @@ provider.on("block", async (blockNumber) => {
         miner: blockInfo.miner,
         extraData: blockInfo.extraData,
         baseFeePerGas: blockInfo.baseFeePerGas,
-        transactionCount: blockInfo.transactions.length
+        transactionCount: blockInfo.transactions.length,
+        nonce: blockInfo.nonce,
+        difficulty: blockInfo.difficulty
     }).then(() => {
         console.log("Block save successfully!");
     }).catch(error => {
@@ -124,7 +128,7 @@ provider.on("block", async (blockNumber) => {
                     const contract = new ethers.Contract(transactionReceiptInfo.to, eventAbi, provider);
                     try {
                         console.log(blockNumber);
-                        const transferEvents = await contract.queryFilter('Transfer', blockNumber - 2, blockNumber);
+                        const transferEvents = await contract.queryFilter('Transfer', blockNumber, blockNumber);
                         if (transferEvents !== undefined && transferEvents.length > 0) {
        
                             for (let i in transferEvents) {
