@@ -1,7 +1,6 @@
 export const RunConfig = {
-    // ChainUrl: "http://127.0.0.1:7545",
-    ChainUrl: "https://test.metabasenet.site/rpc",
+    ChainUrl: "http://39.106.251.173/rpc",
     asyncStep: 500,
-    startNumber: 1070384,
-    endNumber: 1070384,
+    startNumber: 0,
+    endNumber: 5533866,
 }

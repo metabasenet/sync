@@ -62,7 +62,12 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
         blockInfoArray.push(blockInfoModel)
 
         for (let j in blockInfo.transactions) {
+
+            console.log(blockInfo.transactions[j])
             let transactionInfo = await provider.getTransaction(blockInfo.transactions[j]);
+            // if(transactionInfo==null){
+            //     break;
+            // }
             const transactionInfoModel = {
                 hash: transactionInfo.hash,
                 type: transactionInfo.type,

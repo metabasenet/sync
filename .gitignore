@@ -1,3 +1,5 @@
 node_modules/
+RunConfig.js
 app.js
 config.js
+ContractVertify.js

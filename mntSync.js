@@ -117,20 +117,21 @@ provider.on("block", async (blockNumber) => {
                 console.log("Transaction Receipt information saved failed!\n" + error);
             })
         }
-        //sync contrat transaction info 
+
         if (transactionReceiptInfo.to != null) {
             provider.getCode(transactionReceiptInfo.to).then(async code => {
                 //determine contract address
                 if (code.length > 4) {
-                    const eventAbi = [
-                        "event Transfer(address indexed from, address indexed to, uint256 value)"
-                    ];
-                    const contract = new ethers.Contract(transactionReceiptInfo.to, eventAbi, provider);
+                    const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));
+                    // const eventAbi = [
+                    //     "event Transfer(address indexed from, address indexed to, uint256 value)"
+                    // ];
+                    const contract = new ethers.Contract(transactionReceiptInfo.to, ERC20ABi, provider);
                     try {
                         console.log(blockNumber);
+                        //sync contrat transaction info 
                         const transferEvents = await contract.queryFilter('Transfer', blockNumber, blockNumber);
                         if (transferEvents !== undefined && transferEvents.length > 0) {
-       
                             for (let i in transferEvents) {
                                 TransactionErc20.create({
                                     transactionHash: transferEvents[i].transactionHash,
@@ -146,13 +147,19 @@ provider.on("block", async (blockNumber) => {
                                     console.log("erc20 information save failed!\n" + error);
                                 })
 
-                                console.log(transferEvents[i].topics)
+                                //update ERC20 balance
+                                let addressFrom = transferEvents[i].topics[1].replace("0x000000000000000000000000", "0x");
+                                let balanceFrom = await contract.balanceOf(addressFrom);
+                                let addressTo = transferEvents[i].topics[1].replace("0x000000000000000000000000", "0x");
+                                let balanceTo = await contract.balanceOf(addressTo);
+                                updateErc20Balance(addressFrom, transferEvents[i].address, balanceFrom);
+                                updateErc20Balance(addressTo, transferEvents[i].address, balanceTo);
+
                             }
                         }
                     } catch (e) {
                         console.log(e.message)
                     }
-
                 }
             });
         }
@@ -160,7 +167,6 @@ provider.on("block", async (blockNumber) => {
         //update balance
         updateBalance(transactionReceiptInfo.from);
         updateBalance(transactionReceiptInfo.to);
-
     }
 })
 
@@ -180,4 +186,12 @@ function updateBalance(address) {
             }
         })
     }
+}
+
+function updateErc20Balance(address, contractAddress, balance) {
+    let sql = "REPLACE  INTO erc20_balance(address,contractAddress, balance, updateTime) VALUES (:address,:contractAddress, :balance, NOW())";
+    sequelize.query(sql, {
+        replacements: { address: address, contractAddress: contractAddress, balance: balance },
+        type: Sequelize.QueryTypes.INSERT
+    });
 }
