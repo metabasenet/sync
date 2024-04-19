@@ -95,27 +95,31 @@ provider.on("block", async (blockNumber) => {
         if (transactionReceiptInfo.contractAddress != null) {
             const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));
             const contract = new ethers.Contract(transactionReceiptInfo.contractAddress, ERC20ABi, provider);
-            const name = await contract.name();
-            const Symbol = await contract.symbol();
-            const totalSupply = await contract.totalSupply();
-            const decimals = await contract.decimals();
+            try {
+                const name = await contract.name();
+                const Symbol = await contract.symbol();
+                const totalSupply = await contract.totalSupply();
+                const decimals = await contract.decimals();
 
-            await Contract.create({
-                contractAddress: transactionReceiptInfo.contractAddress,
-                blockHash: transactionReceiptInfo.blockHash,
-                transactionHash: transactionReceiptInfo.hash,
-                blockNumber: transactionReceiptInfo.blockNumber,
-                creator: transactionReceiptInfo.from,
-                status: transactionReceiptInfo.status,
-                totalSupply: totalSupply,
-                ercName: name,
-                ercSymbol: Symbol,
-                decimals: decimals
-            }).then(() => {
-                console.log("Transaction Receipt information saved successfully!");
-            }).catch(error => {
-                console.log("Transaction Receipt information saved failed!\n" + error);
-            })
+                await Contract.create({
+                    contractAddress: transactionReceiptInfo.contractAddress,
+                    blockHash: transactionReceiptInfo.blockHash,
+                    transactionHash: transactionReceiptInfo.hash,
+                    blockNumber: transactionReceiptInfo.blockNumber,
+                    creator: transactionReceiptInfo.from,
+                    status: transactionReceiptInfo.status,
+                    totalSupply: totalSupply,
+                    ercName: name,
+                    ercSymbol: Symbol,
+                    decimals: decimals
+                }).then(() => {
+                    console.log("Transaction Receipt information saved successfully!");
+                }).catch(error => {
+                    console.log("Transaction Receipt information saved failed!\n" + error);
+                })
+            } catch (ex) {
+
+            }
         }
 
         if (transactionReceiptInfo.to != null) {
