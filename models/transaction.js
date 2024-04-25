@@ -62,6 +62,10 @@ export const Transaction = sequelize.define('transaction', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  methodHash: {
+    type: DataTypes.STRING(15),
+    allowNull: true
+  },
   r: {
     type: DataTypes.STRING(80),
     allowNull: true

@@ -39,12 +39,18 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
     let transactionInfoArray = [];
     let transactionReceiptInfoArray = [];
     let contartInfoArray = [];
+    let TransactionErc20ModelArray = [];
     for (let k = i; k < i + asyncStep; k++) {
         if (k > endNumber) {
             break;
         }
 
         let blockInfo = await provider.getBlock(k);
+
+        let gasPrice;
+        if (blockInfo.transactions.length > 0) {
+            gasPrice = provider.getTransaction(blockInfo.transactions[0]).gasPrice
+        }
         const blockInfoModel = {
             number: blockInfo.number,
             hash: blockInfo.hash,
@@ -52,6 +58,7 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
             timestamp: blockInfo.timestamp,
             gasLimit: blockInfo.gasLimit,
             gasUsed: blockInfo.gasUsed,
+            gasPrice: gasPrice,
             miner: blockInfo.miner,
             extraData: blockInfo.extraData,
             baseFeePerGas: blockInfo.baseFeePerGas,
@@ -62,15 +69,34 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
         blockInfoArray.push(blockInfoModel)
 
         for (let j in blockInfo.transactions) {
-
-            console.log(blockInfo.transactions[j])
             let transactionInfo = await provider.getTransaction(blockInfo.transactions[j]);
-            // if(transactionInfo==null){
-            //     break;
-            // }
+
+            //error transaction
+            if (transactionInfo == null) {
+                console.log(blockInfo.transactions[j]);
+                const transactionInfoModel = {
+                    hash: blockInfo.transactions[j],
+                    blockNumber: blockInfo.number,
+                    blockHash: blockInfo.blockHash,
+                }
+                transactionInfoArray.push(transactionInfoModel);
+                continue;
+            }
+
+            let transactionType;
+            if (transactionInfo.data.length < 4) {
+                transactionType = 0;
+            } else if (transactionInfo.data.length > 4) {
+                if (transactionInfo.to == undefined) {
+                    transactionType = 1;
+                } else {
+                    transactionType = 2;
+                }
+            }
+
             const transactionInfoModel = {
                 hash: transactionInfo.hash,
-                type: transactionInfo.type,
+                type: transactionType,
                 blockHash: transactionInfo.blockHash,
                 blockNumber: transactionInfo.blockNumber,
                 transactionIndex: transactionInfo.index,
@@ -83,6 +109,7 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
                 value: transactionInfo.value,
                 nonce: transactionInfo.nonce,
                 data: transactionInfo.data,
+                methodHash: transactionInfo.data.length > 4 ? transactionInfo.data.slice(0, 10) : null,
                 creates: transactionInfo.create,
                 chainId: transactionInfo.chainId
             }
@@ -101,7 +128,7 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
                 cumulativeGasUsed: transactionReceiptInfo.cumulativeGasUsed,
                 effectiveGasPrice: transactionReceiptInfo.gasPrice,
                 status: transactionReceiptInfo.status,
-                type: transactionReceiptInfo.type
+                type: transactionType
             }
             transactionReceiptInfoArray.push(transactionReceiptInfoModel);
 
@@ -131,6 +158,23 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
                     console.log(e)
                 }
             }
+
+            if (transactionReceiptInfo.logs.length > 0) {
+                for (let m = 0; m < transactionReceiptInfo.logs.length; m++) {
+                    const TransactionErc20Model = {
+                        transactionHash: transactionReceiptInfo.logs[m].transactionHash,
+                        contractAddress: transactionReceiptInfo.logs[m].address,
+                        blockHash: transactionReceiptInfo.logs[m].blockHash,
+                        blockNumber: transactionReceiptInfo.logs[m].blockNumber,
+                        methodHash: transactionReceiptInfo.logs[m].topics[0].slice(0, 10),
+                        from: transactionReceiptInfo.logs[m].topics[1] != null ? transactionReceiptInfo.logs[m].topics[1].replace("0x000000000000000000000000", "0x") : null,
+                        to: transactionReceiptInfo.logs[m].topics[2] != null ? transactionReceiptInfo.logs[m].topics[2].replace("0x000000000000000000000000", "0x") : null,
+                        value: transactionReceiptInfo.logs[m].data != null ? transactionReceiptInfo.logs[m].data : null,
+                        index: transactionReceiptInfo.logs[m].index
+                    }
+                    TransactionErc20ModelArray.push(TransactionErc20Model);
+                }
+            }
         }
     }
     bulkCreateBlock(blockInfoArray);
@@ -143,47 +187,50 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
     if (contartInfoArray.length > 0) {
         bulkCreateContract(contartInfoArray);
     }
+    if (TransactionErc20ModelArray.length > 0) {
+        bulkCreateTransactionErc20(TransactionErc20ModelArray)
+    }
 }
 
 
 //sync contract transaction history info
-const contractAddressList = await Contract.findAll({
-    attributes: ['contractAddress']
-})
-for (let i in contractAddressList) {
-    console.log(contractAddressList[i].contractAddress)
-    const eventAbi = [
-        "event Transfer(address indexed from, address indexed to, uint256 value)"
-    ];
-    const contract = new ethers.Contract(contractAddressList[i].contractAddress, eventAbi, provider);
-    // let blockNumber = await provider.getBlockNumber();
-    try {
-        const transferEvents = await contract.queryFilter('Transfer', 0, endNumber);
-        if (transferEvents !== undefined && transferEvents.length > 0) {
-            let TransactionErc20ModelArray = [];
-            for (let i = 0; i <= transferEvents.length; i = i + asyncStep) {
-                for (let k = i; k < i + asyncStep; k++) {
-                    if (k >= transferEvents.length) {
-                        break;
-                    }
-                    const TransactionErc20Model = {
-                        transactionHash: transferEvents[k].transactionHash,
-                        contractAddress: transferEvents[k].address,
-                        blockHash: transferEvents[k].blockHash,
-                        blockNumber: transferEvents[k].blockNumber,
-                        from: transferEvents[k].topics[1],
-                        to: transferEvents[k].topics[2],
-                        value: parseInt(transferEvents[k].data, 16)
-                    }
-                    TransactionErc20ModelArray.push(TransactionErc20Model);
-                }
-                bulkCreateTransactionErc20(TransactionErc20ModelArray);
-            }
-        }
-    } catch (e) {
-        console.log(e.message)
-    }
-}
+// const contractAddressList = await Contract.findAll({
+//     attributes: ['contractAddress']
+// })
+// for (let i in contractAddressList) {
+//     console.log(contractAddressList[i].contractAddress)
+//     const eventAbi = [
+//         "event Transfer(address indexed from, address indexed to, uint256 value)"
+//     ];
+//     const contract = new ethers.Contract(contractAddressList[i].contractAddress, eventAbi, provider);
+//     // let blockNumber = await provider.getBlockNumber();
+//     try {
+//         const transferEvents = await contract.queryFilter('Transfer', 0, endNumber);
+//         if (transferEvents !== undefined && transferEvents.length > 0) {
+//             let TransactionErc20ModelArray = [];
+//             for (let i = 0; i <= transferEvents.length; i = i + asyncStep) {
+//                 for (let k = i; k < i + asyncStep; k++) {
+//                     if (k >= transferEvents.length) {
+//                         break;
+//                     }
+//                     const TransactionErc20Model = {
+//                         transactionHash: transferEvents[k].transactionHash,
+//                         contractAddress: transferEvents[k].address,
+//                         blockHash: transferEvents[k].blockHash,
+//                         blockNumber: transferEvents[k].blockNumber,
+//                         from: transferEvents[k].topics[1],
+//                         to: transferEvents[k].topics[2],
+//                         value: parseInt(transferEvents[k].data, 16)
+//                     }
+//                     TransactionErc20ModelArray.push(TransactionErc20Model);
+//                 }
+//                 bulkCreateTransactionErc20(TransactionErc20ModelArray);
+//             }
+//         }
+//     } catch (e) {
+//         console.log(e.message)
+//     }
+// }
 
 //update platform balance 
 sqlHelper.init();

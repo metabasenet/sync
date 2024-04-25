@@ -40,6 +40,10 @@ export const Block = sequelize.define('block', {
     type: DataTypes.DECIMAL(65, 0),
     allowNull: true
   },
+  gasPrice: {
+    type: DataTypes.DECIMAL(65, 0),
+    allowNull: true
+  },
   miner: {
     type: DataTypes.STRING(100),
     allowNull: true
