@@ -48,7 +48,7 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
         let blockInfo = await provider.getBlock(k);
 
         let gasPrice;
-        if (blockInfo.transactions.length > 0) {
+        if (blockInfo.transactions != null && blockInfo.transactions.length > 0) {
             gasPrice = provider.getTransaction(blockInfo.transactions[0]).gasPrice
         }
         const blockInfoModel = {
@@ -109,7 +109,7 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
                 value: transactionInfo.value,
                 nonce: transactionInfo.nonce,
                 data: transactionInfo.data,
-                methodHash: transactionInfo.data.length > 4 ? transactionInfo.data.slice(0, 10) : null,
+                methodHash: transactionInfo.data.length > 0 ? transactionInfo.data.slice(0, 10) : null,
                 creates: transactionInfo.create,
                 chainId: transactionInfo.chainId
             }

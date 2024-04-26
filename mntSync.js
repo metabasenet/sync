@@ -23,12 +23,13 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
 
 const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl);
 provider.on("block", async (blockNumber) => {
+    // let blockNumber = 6045393;
     console.log(blockNumber)
     let blockInfo = await provider.getBlock(blockNumber);
     //sync block
 
     let gasPrice;
-    if (blockInfo.transactions.length > 0) {
+    if (blockInfo.transactions != null && blockInfo.transactions.length > 0) {
         gasPrice = provider.getTransaction(blockInfo.transactions[0]).gasPrice
     }
     await Block.create({
@@ -67,6 +68,7 @@ provider.on("block", async (blockNumber) => {
                 transactionType = 2;
             }
         }
+
         await Transaction.create({
             hash: transactionInfo.hash,
             type: transactionType,
@@ -82,7 +84,7 @@ provider.on("block", async (blockNumber) => {
             value: transactionInfo.value,
             nonce: transactionInfo.nonce,
             data: transactionInfo.data,
-            methodHash: transactionInfo.data.length > 4 ? transactionInfo.data.slice(0, 10) : null,
+            methodHash: transactionInfo.data.length > 0 ? transactionInfo.data.slice(0, 10) : null,
             creates: transactionInfo.create,
             chainId: transactionInfo.chainId
         }).then(() => {
@@ -142,29 +144,35 @@ provider.on("block", async (blockNumber) => {
             }
         }
 
+        //erc20 log
         if (transactionReceiptInfo.logs.length > 0) {
             for (let m = 0; m < transactionReceiptInfo.logs.length; m++) {
                 const TransactionErc20Model = {
                     transactionHash: transactionReceiptInfo.logs[m].transactionHash,
                     contractAddress: transactionReceiptInfo.logs[m].address,
-                    blockHash: transactionReceiptInfo.logs[m].blockHash.slice(0, 10),
+                    blockHash: transactionReceiptInfo.logs[m].blockHash,
                     blockNumber: transactionReceiptInfo.logs[m].blockNumber,
-                    methodHash: transactionReceiptInfo.logs[m].topics[0],
+                    methodHash: transactionReceiptInfo.logs[m].topics[0].slice(0, 10),
                     from: transactionReceiptInfo.logs[m].topics[1] != null ? transactionReceiptInfo.logs[m].topics[1].replace("0x000000000000000000000000", "0x") : null,
                     to: transactionReceiptInfo.logs[m].topics[2] != null ? transactionReceiptInfo.logs[m].topics[2].replace("0x000000000000000000000000", "0x") : null,
-                    value: transactionReceiptInfo.logs[m].data != null ? parseInt(transactionReceiptInfo.logs[m].data, 16) : null,
+                    value: transactionReceiptInfo.logs[m].data != null ? transactionReceiptInfo.logs[m].data : null,
                     index: transactionReceiptInfo.logs[m].index
                 }
                 TransactionErc20.create(TransactionErc20Model);
 
                 //update ERC20 balance
+                const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));
                 const contract = new ethers.Contract(TransactionErc20Model.contractAddress, ERC20ABi, provider);
-                let addressFrom = transactionReceiptInfo.logs[m].topics[1].replace("0x000000000000000000000000", "0x");
-                let balanceFrom = await contract.balanceOf(addressFrom);
-                let addressTo = transactionReceiptInfo.logs[m].topics[2].replace("0x000000000000000000000000", "0x");
-                let balanceTo = await contract.balanceOf(addressTo);
-                updateErc20Balance(addressFrom, transactionReceiptInfo.logs[m].address, balanceFrom);
-                updateErc20Balance(addressTo, transactionReceiptInfo.logs[m].address, balanceTo);
+                if (transactionReceiptInfo.logs[m].topics[1] != null) {
+                    let addressFrom = transactionReceiptInfo.logs[m].topics[1].replace("0x000000000000000000000000", "0x");
+                    let balanceFrom = await contract.balanceOf(addressFrom);
+                    updateErc20Balance(addressFrom, transactionReceiptInfo.logs[m].address, balanceFrom);
+                }
+                if (transactionReceiptInfo.logs[m].topics[2] != null) {
+                    let addressTo = transactionReceiptInfo.logs[m].topics[2].replace("0x000000000000000000000000", "0x");
+                    let balanceTo = await contract.balanceOf(addressTo);
+                    updateErc20Balance(addressTo, transactionReceiptInfo.logs[m].address, balanceTo);
+                }
             }
         }
 
