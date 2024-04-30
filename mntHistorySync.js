@@ -166,9 +166,9 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
                         contractAddress: transactionReceiptInfo.logs[m].address,
                         blockHash: transactionReceiptInfo.logs[m].blockHash,
                         blockNumber: transactionReceiptInfo.logs[m].blockNumber,
-                        methodHash: transactionReceiptInfo.logs[m].topics[0].slice(0, 10),
-                        from: transactionReceiptInfo.logs[m].topics[1] != null ? transactionReceiptInfo.logs[m].topics[1].replace("0x000000000000000000000000", "0x") : null,
-                        to: transactionReceiptInfo.logs[m].topics[2] != null ? transactionReceiptInfo.logs[m].topics[2].replace("0x000000000000000000000000", "0x") : null,
+                        methodHash: transactionReceiptInfo.logs[m].topics[0],
+                        from: transactionReceiptInfo.logs[m].topics[1] != null ? transactionReceiptInfo.logs[m].topics[1] : null,
+                        to: transactionReceiptInfo.logs[m].topics[2] != null ? transactionReceiptInfo.logs[m].topics[2] : null,
                         value: transactionReceiptInfo.logs[m].data != null ? transactionReceiptInfo.logs[m].data : null,
                         index: transactionReceiptInfo.logs[m].index
                     }

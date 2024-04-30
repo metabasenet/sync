@@ -1,12 +1,12 @@
 var DataTypes = require("sequelize").DataTypes;
-var _contract = require("./contract");
+var _transaction_platform = require("./transaction_platform");
 
 function initModels(sequelize) {
-  var contract = _contract(sequelize, DataTypes);
+  var transaction_platform = _transaction_platform(sequelize, DataTypes);
 
 
   return {
-    contract,
+    transaction_platform,
   };
 }
 module.exports = initModels;
