@@ -10,7 +10,7 @@ import { Sequelize } from 'sequelize';
 import { config } from "./database/config.js";
 import { RunConfig } from "./RunConfig.js";
 import BigNumber from "bignumber.js";
-//ethers 6.6.4
+//ethers 5.6.2
 
 
 const sequelize = new Sequelize(config.database, config.username, config.password, {
@@ -25,9 +25,8 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
     },
 });
 
-const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl);
+const provider = new ethers.providers.JsonRpcBatchProvider(RunConfig.ChainUrl102);
 provider.on("block", async (blockNumber) => {
-    // blockNumber = 6102209;
     const sqlTransaction = await sequelize.transaction();
     try {
         console.log(blockNumber)
@@ -59,8 +58,6 @@ provider.on("block", async (blockNumber) => {
             console.log("Block save failed!\n" + error);
         })
 
-
-
         //sync transactions
         for (let i in blockInfo.transactions) {
             let transactionInfo = await provider.getTransaction(blockInfo.transactions[i])
@@ -74,7 +71,7 @@ provider.on("block", async (blockNumber) => {
                     transactionHash: transactionInfo.hash,
                     from: transactionInfo.from,
                     to: transactionInfo.to,
-                    value: ethers.formatEther(transactionInfo.value),
+                    value: ethers.utils.formatEther(transactionInfo.value),
                     index: -1,
                     utc: blockInfo.timestamp
                 }
@@ -111,11 +108,10 @@ provider.on("block", async (blockNumber) => {
                 console.log("Transaction information save failed!\n" + error);
             })
 
-
             //sync TransactionReceipt
             let transactionReceiptInfo = await provider.getTransactionReceipt(blockInfo.transactions[i]);
             await TransactionReceipt.create({
-                transactionHash: transactionReceiptInfo.hash,
+                transactionHash: transactionReceiptInfo.transactionHash,
                 to: transactionReceiptInfo.to,
                 from: transactionReceiptInfo.from,
                 contractAddress: transactionReceiptInfo.contractAddress,
@@ -200,34 +196,14 @@ provider.on("block", async (blockNumber) => {
                 }
             }
 
-            //platform transfer log
-            const result = await provider.send('debug_traceTransaction', [transactionInfo.hash]);
-            for (let i = 0; i < result.structLogs.length; i++) {
-                if (result.structLogs[i].op == 'CALL') {
-                    const l = result.structLogs[i].stack.length;
-                    const gas = result.structLogs[i].stack[l - 1];
-                    const in_size = result.structLogs[i].stack[l - 5];
-                    if (in_size == 0) {
-                        const TransactionPlatformModel = {
-                            transactionHash: transactionInfo.hash,
-                            from: transactionInfo.to,
-                            to: result.structLogs[i].stack[l - 2],
-                            value: ethers.formatEther(result.structLogs[i].stack[l - 3]),
-                            index: i,
-                            utc: blockInfo.timestamp
-                        }
-                        await TransactionPlatform.create(TransactionPlatformModel, { transaction: sqlTransaction });
-                    }
-                }
-            }
-
-
             //update balance
+            console.log(transactionReceiptInfo.from)
             updateBalance(transactionReceiptInfo.from);
+            console.log(transactionReceiptInfo.to)
             updateBalance(transactionReceiptInfo.to);
         }
         await sqlTransaction.commit();
-        await updateMNtprice(provider);
+        // await updateMNtprice(provider);
     } catch (e) {
         console.log(e)
         await sqlTransaction.rollback();
@@ -240,20 +216,14 @@ provider.on("block", async (blockNumber) => {
     }
 })
 
-
-
 function updateBalance(address) {
-    if (address != null) {
-        provider.getCode(address).then(code => {
-            if (code.length <= 4) {
-                provider.getBalance(address).then(balance => {
-                    let sql = "REPLACE  INTO platform_balance(address, balance, updateTime) VALUES (:address, :balance, NOW())";
-                    sequelize.query(sql, {
-                        replacements: { address: address, balance: balance },
-                        type: Sequelize.QueryTypes.INSERT
-                    });
-                })
-            }
+    if (address != null && address != ethers.constants.AddressZero) {
+        provider.getBalance(address).then(balance => {
+            let sql = "REPLACE  INTO platform_balance(address, balance, updateTime) VALUES (:address, :balance, NOW())";
+            sequelize.query(sql, {
+                replacements: { address: address, balance: parseInt(balance._hex, 16) },
+                type: Sequelize.QueryTypes.INSERT
+            });
         })
     }
 }
