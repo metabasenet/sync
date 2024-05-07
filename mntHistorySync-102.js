@@ -9,9 +9,9 @@ import fs from "fs";
 import { TransactionErc20 } from "./models/transaction_erc20.js";
 import { sqlHelper } from "./database/sqlHelper.js";
 import { RunConfig } from "./RunConfig.js";
-//ethers 6.6.4
+//ethers 5.6.2
 
-const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl102);
+const provider = new ethers.providers.JsonRpcBatchProvider(RunConfig.ChainUrl102);
 let blockNumber = await provider.getBlockNumber();
 let endNumber = RunConfig.endNumber > 0 ? RunConfig.endNumber : blockNumber;
 const asyncStep = RunConfig.asyncStep;
