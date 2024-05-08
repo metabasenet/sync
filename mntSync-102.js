@@ -5,12 +5,11 @@ import { TransactionReceipt } from './models/transaction_receipt.js';
 import { Contract } from "./models/contract.js";
 import fs from "fs";
 import { TransactionErc20 } from "./models/transaction_erc20.js"
-import { TransactionPlatform } from "./models/transaction_platform.js"
+import { PlatformInternalTransaction } from "./models/platform_internal_transaction.js"
 import { Sequelize } from 'sequelize';
 import { config } from "./database/config.js";
 import { RunConfig } from "./RunConfig.js";
 import BigNumber from "bignumber.js";
-//ethers 5.6.2
 
 
 const sequelize = new Sequelize(config.database, config.username, config.password, {
@@ -25,7 +24,7 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
     },
 });
 
-const provider = new ethers.providers.JsonRpcBatchProvider(RunConfig.ChainUrl102);
+const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl102);
 provider.on("block", async (blockNumber) => {
     const sqlTransaction = await sequelize.transaction();
     try {
@@ -66,16 +65,19 @@ provider.on("block", async (blockNumber) => {
             if (transactionInfo.data.length < 4) {
                 transactionType = 0;
 
-                //sync platform transactin
-                const TransactionPlatformModel = {
+                //sync platform internal transaction
+                const PlatformInternalTransactionModel = {
                     transactionHash: transactionInfo.hash,
+                    contractAddress: ethers.ZeroAddress,
+                    blockHash: blockInfo.hash,
+                    blockNumber: blockInfo.number,
+                    methodHash: 'transfer',
                     from: transactionInfo.from,
                     to: transactionInfo.to,
-                    value: ethers.utils.formatEther(transactionInfo.value),
+                    value: ethers.formatEther(transactionInfo.value),
                     index: -1,
-                    utc: blockInfo.timestamp
                 }
-                await TransactionPlatform.create(TransactionPlatformModel, { transaction: sqlTransaction });
+                await PlatformInternalTransaction.create(PlatformInternalTransactionModel, { transaction: sqlTransaction });
             } else if (transactionInfo.data.length > 4) {
                 if (transactionInfo.to == undefined) {
                     transactionType = 1;
@@ -89,7 +91,7 @@ provider.on("block", async (blockNumber) => {
                 type: transactionType,
                 blockHash: transactionInfo.blockHash,
                 blockNumber: transactionInfo.blockNumber,
-                transactionIndex: transactionInfo.index,
+                transactionIndex: transactionInfo.transactionIndex,
                 from: transactionInfo.from,
                 gasPrice: transactionInfo.gasPrice,
                 maxPriorityFeePerGas: transactionInfo.maxPriorityFeePerGas,
@@ -111,7 +113,7 @@ provider.on("block", async (blockNumber) => {
             //sync TransactionReceipt
             let transactionReceiptInfo = await provider.getTransactionReceipt(blockInfo.transactions[i]);
             await TransactionReceipt.create({
-                transactionHash: transactionReceiptInfo.transactionHash,
+                transactionHash: transactionReceiptInfo.hash,
                 to: transactionReceiptInfo.to,
                 from: transactionReceiptInfo.from,
                 contractAddress: transactionReceiptInfo.contractAddress,
@@ -159,7 +161,6 @@ provider.on("block", async (blockNumber) => {
 
                 }
             }
-
             //erc20 log
             if (transactionReceiptInfo.logs.length > 0) {
                 for (let m = 0; m < transactionReceiptInfo.logs.length; m++) {
@@ -172,34 +173,40 @@ provider.on("block", async (blockNumber) => {
                         from: transactionReceiptInfo.logs[m].topics[1] != null ? transactionReceiptInfo.logs[m].topics[1] : null,
                         to: transactionReceiptInfo.logs[m].topics[2] != null ? transactionReceiptInfo.logs[m].topics[2] : null,
                         value: transactionReceiptInfo.logs[m].data != null ? transactionReceiptInfo.logs[m].data : null,
-                        index: transactionReceiptInfo.logs[m].transactionIndex
+                        index: transactionReceiptInfo.logs[m].index
                     }
-                    await TransactionErc20.create(TransactionErc20Model, { transaction: sqlTransaction });
+                    if (TransactionErc20Model.contractAddress != ethers.ZeroAddress) {
+                        await PlatformInternalTransaction.create(TransactionErc20Model, { transaction: sqlTransaction })
+                    } else {
+                        await TransactionErc20.create(TransactionErc20Model, { transaction: sqlTransaction });
+                    }
 
                     //update ERC20 balance
                     try {
-                        const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));
-                        const contract = new ethers.Contract(TransactionErc20Model.contractAddress, ERC20ABi, provider);
-                        if (transactionReceiptInfo.logs[m].topics[1] != null) {
-                            let addressFrom = transactionReceiptInfo.logs[m].topics[1].replace("0x000000000000000000000000", "0x");
-                            let balanceFrom = await contract.balanceOf(addressFrom);
-                            updateErc20Balance(addressFrom, transactionReceiptInfo.logs[m].address, balanceFrom);
-                        }
-                        if (transactionReceiptInfo.logs[m].topics[2] != null) {
-                            let addressTo = transactionReceiptInfo.logs[m].topics[2].replace("0x000000000000000000000000", "0x");
-                            let balanceTo = await contract.balanceOf(addressTo);
-                            updateErc20Balance(addressTo, transactionReceiptInfo.logs[m].address, balanceTo);
+                        if (TransactionErc20Model.contractAddress != ethers.ZeroAddress) {
+                            const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));
+                            const contract = new ethers.Contract(TransactionErc20Model.contractAddress, ERC20ABi, provider);
+
+                            if (transactionReceiptInfo.logs[m].topics[1] != null) {
+                                let addressFrom = transactionReceiptInfo.logs[m].topics[1].replace("0x000000000000000000000000", "0x");
+                                let balanceFrom = await contract.balanceOf(addressFrom);
+                                updateErc20Balance(addressFrom, transactionReceiptInfo.logs[m].address, balanceFrom);
+                            }
+
+                            if (transactionReceiptInfo.logs[m].topics[2] != null) {
+                                let addressTo = transactionReceiptInfo.logs[m].topics[2].replace("0x000000000000000000000000", "0x");
+                                let balanceTo = await contract.balanceOf(addressTo);
+                                updateErc20Balance(addressTo, transactionReceiptInfo.logs[m].address, balanceTo);
+                            }
                         }
                     } catch (e) {
-
+                        console.log(e)
                     }
                 }
             }
 
             //update balance
-            console.log(transactionReceiptInfo.from)
             updateBalance(transactionReceiptInfo.from);
-            console.log(transactionReceiptInfo.to)
             updateBalance(transactionReceiptInfo.to);
         }
         await sqlTransaction.commit();
@@ -217,11 +224,11 @@ provider.on("block", async (blockNumber) => {
 })
 
 function updateBalance(address) {
-    if (address != null && address != ethers.constants.AddressZero) {
+    if (address != null && address != ethers.ZeroAddress) {
         provider.getBalance(address).then(balance => {
             let sql = "REPLACE  INTO platform_balance(address, balance, updateTime) VALUES (:address, :balance, NOW())";
             sequelize.query(sql, {
-                replacements: { address: address, balance: parseInt(balance._hex, 16) },
+                replacements: { address: address, balance: balance },
                 type: Sequelize.QueryTypes.INSERT
             });
         })
@@ -231,7 +238,7 @@ function updateBalance(address) {
 function updateErc20Balance(address, contractAddress, balance) {
     let sql = "REPLACE  INTO erc20_balance(address,contractAddress, balance, updateTime) VALUES (:address,:contractAddress, :balance, NOW())";
     sequelize.query(sql, {
-        replacements: { address: address, contractAddress: contractAddress, balance: balance },
+        replacements: { address: address, contractAddress: contractAddress, balance: parseInt(balance, 16) },
         type: Sequelize.QueryTypes.INSERT
     });
 }

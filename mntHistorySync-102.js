@@ -9,9 +9,10 @@ import fs from "fs";
 import { TransactionErc20 } from "./models/transaction_erc20.js";
 import { sqlHelper } from "./database/sqlHelper.js";
 import { RunConfig } from "./RunConfig.js";
-//ethers 5.6.2
+import { PlatformInternalTransaction } from "./models/platform_internal_transaction.js"
 
-const provider = new ethers.providers.JsonRpcBatchProvider(RunConfig.ChainUrl102);
+
+const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl102);
 let blockNumber = await provider.getBlockNumber();
 let endNumber = RunConfig.endNumber > 0 ? RunConfig.endNumber : blockNumber;
 const asyncStep = RunConfig.asyncStep;
@@ -41,6 +42,7 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
     let transactionReceiptInfoArray = [];
     let contartInfoArray = [];
     let TransactionErc20ModelArray = [];
+    let PlatformInternalTransactionModelArray = [];
     for (let k = i; k < i + asyncStep; k++) {
         if (k > endNumber) {
             break;
@@ -87,6 +89,20 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
             let transactionType;
             if (transactionInfo.data.length < 4) {
                 transactionType = 0;
+
+                //sync platform internal transaction
+                const PlatformInternalTransactionModel = {
+                    transactionHash: transactionInfo.hash,
+                    contractAddress: ethers.ZeroAddress,
+                    blockHash: blockInfo.hash,
+                    blockNumber: blockInfo.number,
+                    methodHash: 'transfer',
+                    from: transactionInfo.from,
+                    to: transactionInfo.to,
+                    value: ethers.formatEther(transactionInfo.value),
+                    index: -1,
+                }
+                PlatformInternalTransactionModelArray.push(PlatformInternalTransactionModel);
             } else if (transactionInfo.data.length > 4) {
                 if (transactionInfo.to == undefined) {
                     transactionType = 1;
@@ -100,7 +116,7 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
                 type: transactionType,
                 blockHash: transactionInfo.blockHash,
                 blockNumber: transactionInfo.blockNumber,
-                transactionIndex: transactionInfo.index,
+                transactionIndex: transactionInfo.transactionIndex,
                 from: transactionInfo.from,
                 gasPrice: transactionInfo.gasPrice,
                 maxPriorityFeePerGas: transactionInfo.maxPriorityFeePerGas,
@@ -118,11 +134,11 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
 
             let transactionReceiptInfo = await provider.getTransactionReceipt(blockInfo.transactions[j]);
             const transactionReceiptInfoModel = {
-                transactionHash: transactionReceiptInfo.transactionHash,
+                transactionHash: transactionReceiptInfo.hash,
                 to: transactionReceiptInfo.to,
                 from: transactionReceiptInfo.from,
                 contractAddress: transactionReceiptInfo.contractAddress,
-                transactionIndex: transactionReceiptInfo.index,
+                transactionIndex: transactionReceiptInfo.transactionIndex,
                 blockHash: transactionReceiptInfo.blockHash,
                 blockNumber: transactionReceiptInfo.blockNumber,
                 gasUsed: transactionReceiptInfo.gasUsed,
@@ -171,9 +187,14 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
                         from: transactionReceiptInfo.logs[m].topics[1] != null ? transactionReceiptInfo.logs[m].topics[1] : null,
                         to: transactionReceiptInfo.logs[m].topics[2] != null ? transactionReceiptInfo.logs[m].topics[2] : null,
                         value: transactionReceiptInfo.logs[m].data != null ? transactionReceiptInfo.logs[m].data : null,
-                        index: transactionReceiptInfo.logs[m].transactionIndex
+                        index: transactionReceiptInfo.logs[m].index
                     }
-                    TransactionErc20ModelArray.push(TransactionErc20Model);
+
+                    if (TransactionErc20Model.contractAddress != ethers.ZeroAddress) {
+                        PlatformInternalTransactionModelArray.push(TransactionErc20Model)
+                    } else {
+                        TransactionErc20ModelArray.push(TransactionErc20Model);
+                    }
                 }
             }
         }
@@ -191,6 +212,9 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
     if (TransactionErc20ModelArray.length > 0) {
         bulkCreateTransactionErc20(TransactionErc20ModelArray)
     }
+    if (PlatformInternalTransactionModelArray.length > 0) {
+        bulkCreatePlatformInternalTransaction(PlatformInternalTransactionModelArray);
+    }
 }
 
 
@@ -204,9 +228,8 @@ function getAddressCallback(err, result) {
         console.log(err.message);
     } else {
         for (let i in result) {
-            if (result[i].address != null && result[i].address != ethers.constants.AddressZero) {
-                provider.getBalance(result[i].address).then(balanceValue => {
-                    let balance = parseInt(balanceValue._hex, 16)
+            if (result[i].address != null && result[i].address != ethers.ZeroAddress) {
+                provider.getBalance(result[i].address).then(balance => {
                     const address = result[i].address;
                     let insertSql = `REPLACE  INTO platform_balance(address, balance, updateTime) VALUES ('${address}', ${balance}, ?)`;
                     sqlHelper.writeDatabase(insertSql, new Date());
@@ -225,19 +248,20 @@ async function getErc20AddressCallback(err, result) {
         console.log(err.message);
     } else {
         for (let i in result) {
-            try {
-                const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));
-                const contract = new ethers.Contract(result[i].contractAddress, ERC20ABi, provider);
-                //update ERC20 balance
-                let address = result[i].address.replace("0x000000000000000000000000", "0x");
-                let balance = await contract.balanceOf(address);
-                console.log(balance)
-                if (balance !== null) {
-                    let insertSql = `REPLACE  INTO erc20_balance(address,contractAddress, balance, updateTime) VALUES ('${address}','${result[i].contractAddress}', '${balance}', NOW())`;
-                    sqlHelper.writeDatabase(insertSql, new Date());
+            if (result[i].contractAddress != ethers.AddressZero) {
+                try {
+                    const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));
+                    const contract = new ethers.Contract(result[i].contractAddress, ERC20ABi, provider);
+                    //update ERC20 balance
+                    let address = result[i].address.replace("0x000000000000000000000000", "0x");
+                    let balance = await contract.balanceOf(address);
+                    if (balance !== null) {
+                        let insertSql = `REPLACE  INTO erc20_balance(address,contractAddress, balance, updateTime) VALUES ('${address}','${result[i].contractAddress}', '${balance}', NOW())`;
+                        sqlHelper.writeDatabase(insertSql, new Date());
+                    }
+                } catch (ex) {
+                    console.log(ex.message)
                 }
-            } catch (ex) {
-                console.log(ex.message)
             }
         }
     }
@@ -281,5 +305,13 @@ async function bulkCreateTransactionErc20(TransactionErc20ModelArray) {
         console.log("ERC20 transaction save successfully!");
     }).catch(error => {
         console.log("ERC20 transaction save failed!\n" + error);
+    })
+}
+
+async function bulkCreatePlatformInternalTransaction(platformInternalTransactionModelArray) {
+    await PlatformInternalTransaction.bulkCreate(platformInternalTransactionModelArray).then(() => {
+        console.log("platform internal transaction save successfully!");
+    }).catch(error => {
+        console.log("platform internal transaction save failed!\n" + error);
     })
 }
