@@ -191,9 +191,9 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
                     }
 
                     if (TransactionErc20Model.contractAddress != ethers.ZeroAddress) {
-                        PlatformInternalTransactionModelArray.push(TransactionErc20Model)
-                    } else {
                         TransactionErc20ModelArray.push(TransactionErc20Model);
+                    } else {
+                        PlatformInternalTransactionModelArray.push(TransactionErc20Model)
                     }
                 }
             }

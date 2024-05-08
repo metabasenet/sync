@@ -176,9 +176,9 @@ provider.on("block", async (blockNumber) => {
                         index: transactionReceiptInfo.logs[m].index
                     }
                     if (TransactionErc20Model.contractAddress != ethers.ZeroAddress) {
-                        await PlatformInternalTransaction.create(TransactionErc20Model, { transaction: sqlTransaction })
-                    } else {
                         await TransactionErc20.create(TransactionErc20Model, { transaction: sqlTransaction });
+                    } else {
+                        await PlatformInternalTransaction.create(TransactionErc20Model, { transaction: sqlTransaction })
                     }
 
                     //update ERC20 balance
