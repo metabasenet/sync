@@ -1,12 +1,12 @@
 var DataTypes = require("sequelize").DataTypes;
-var _transaction_platform = require("./transaction_platform");
+var _swap_tx = require("./swap_tx");
 
 function initModels(sequelize) {
-  var transaction_platform = _transaction_platform(sequelize, DataTypes);
+  var swap_tx = _swap_tx(sequelize, DataTypes);
 
 
   return {
-    transaction_platform,
+    swap_tx,
   };
 }
 module.exports = initModels;
