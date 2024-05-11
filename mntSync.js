@@ -247,11 +247,13 @@ function updateBalance(address) {
         provider.getCode(address).then(code => {
             if (code.length <= 4) {
                 provider.getBalance(address).then(balance => {
-                    let sql = "REPLACE  INTO platform_balance(address, balance, updateTime) VALUES (:address, :balance, NOW())";
-                    sequelize.query(sql, {
-                        replacements: { address: address, balance: balance },
-                        type: Sequelize.QueryTypes.INSERT
-                    });
+                    if (balance > 0) {
+                        let sql = "REPLACE  INTO platform_balance(address, balance, updateTime) VALUES (:address, :balance, NOW())";
+                        sequelize.query(sql, {
+                            replacements: { address: address, balance: balance },
+                            type: Sequelize.QueryTypes.INSERT
+                        });
+                    }
                 })
             }
         })
@@ -259,11 +261,13 @@ function updateBalance(address) {
 }
 
 function updateErc20Balance(address, contractAddress, balance) {
-    let sql = "REPLACE  INTO erc20_balance(address,contractAddress, balance, updateTime) VALUES (:address,:contractAddress, :balance, NOW())";
-    sequelize.query(sql, {
-        replacements: { address: address, contractAddress: contractAddress, balance: balance },
-        type: Sequelize.QueryTypes.INSERT
-    });
+    if (balance > 0) {
+        let sql = "REPLACE  INTO erc20_balance(address,contractAddress, balance, updateTime) VALUES (:address,:contractAddress, :balance, NOW())";
+        sequelize.query(sql, {
+            replacements: { address: address, contractAddress: contractAddress, balance: balance },
+            type: Sequelize.QueryTypes.INSERT
+        });
+    }
 }
 
 

@@ -230,9 +230,11 @@ function getAddressCallback(err, result) {
         for (let i in result) {
             if (result[i].address != null && result[i].address != ethers.ZeroAddress) {
                 provider.getBalance(result[i].address).then(balance => {
-                    const address = result[i].address;
-                    let insertSql = `REPLACE  INTO platform_balance(address, balance, updateTime) VALUES ('${address}', ${balance}, ?)`;
-                    sqlHelper.writeDatabase(insertSql, new Date());
+                    if (balance > 0) {
+                        const address = result[i].address;
+                        let insertSql = `REPLACE  INTO platform_balance(address, balance, updateTime) VALUES ('${address}', ${balance}, ?)`;
+                        sqlHelper.writeDatabase(insertSql, new Date());
+                    }
                 })
             }
         }
@@ -255,7 +257,7 @@ async function getErc20AddressCallback(err, result) {
                     //update ERC20 balance
                     let address = result[i].address.replace("0x000000000000000000000000", "0x");
                     let balance = await contract.balanceOf(address);
-                    if (balance !== null) {
+                    if (balance !== null && balance > 0) {
                         let insertSql = `REPLACE  INTO erc20_balance(address,contractAddress, balance, updateTime) VALUES ('${address}','${result[i].contractAddress}', '${balance}', NOW())`;
                         sqlHelper.writeDatabase(insertSql, new Date());
                     }
