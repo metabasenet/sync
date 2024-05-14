@@ -226,13 +226,11 @@ provider.on("block", async (blockNumber) => {
 function updateBalance(address) {
     if (address != null && address != ethers.ZeroAddress) {
         provider.getBalance(address).then(balance => {
-            if (balance > 0) {
-                let sql = "REPLACE  INTO platform_balance(address, balance, updateTime) VALUES (:address, :balance, NOW())";
-                sequelize.query(sql, {
-                    replacements: { address: address, balance: balance },
-                    type: Sequelize.QueryTypes.INSERT
-                });
-            }
+            let sql = "REPLACE  INTO platform_balance(address, balance, updateTime) VALUES (:address, :balance, NOW())";
+            sequelize.query(sql, {
+                replacements: { address: address, balance: balance },
+                type: Sequelize.QueryTypes.INSERT
+            });
         })
     }
 }

@@ -230,11 +230,9 @@ function getAddressCallback(err, result) {
         for (let i in result) {
             if (result[i].address != null && result[i].address != ethers.ZeroAddress) {
                 provider.getBalance(result[i].address).then(balance => {
-                    if (balance > 0) {
-                        const address = result[i].address;
-                        let insertSql = `REPLACE  INTO platform_balance(address, balance, updateTime) VALUES ('${address}', ${balance}, ?)`;
-                        sqlHelper.writeDatabase(insertSql, new Date());
-                    }
+                    const address = result[i].address;
+                    let insertSql = `REPLACE  INTO platform_balance(address, balance, updateTime) VALUES ('${address}', ${balance}, ?)`;
+                    sqlHelper.writeDatabase(insertSql, new Date());
                 })
             }
         }

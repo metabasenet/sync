@@ -245,17 +245,13 @@ provider.on("block", async (blockNumber) => {
 function updateBalance(address) {
     if (address != null) {
         provider.getCode(address).then(code => {
-            if (code.length <= 4) {
-                provider.getBalance(address).then(balance => {
-                    if (balance > 0) {
-                        let sql = "REPLACE  INTO platform_balance(address, balance, updateTime) VALUES (:address, :balance, NOW())";
-                        sequelize.query(sql, {
-                            replacements: { address: address, balance: balance },
-                            type: Sequelize.QueryTypes.INSERT
-                        });
-                    }
-                })
-            }
+            provider.getBalance(address).then(balance => {
+                let sql = "REPLACE  INTO platform_balance(address, balance, updateTime) VALUES (:address, :balance, NOW())";
+                sequelize.query(sql, {
+                    replacements: { address: address, balance: balance },
+                    type: Sequelize.QueryTypes.INSERT
+                });
+            })
         })
     }
 }
