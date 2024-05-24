@@ -208,6 +208,7 @@ provider.on("block", async (blockNumber) => {
             //update balance
             updateBalance(transactionReceiptInfo.from);
             updateBalance(transactionReceiptInfo.to);
+            updateBalance(transactionReceiptInfo.contractAddress);
         }
         await sqlTransaction.commit();
         // await updateMNtprice(provider);

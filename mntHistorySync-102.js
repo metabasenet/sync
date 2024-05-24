@@ -220,7 +220,7 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
 
 //update platform balance 
 sqlHelper.init();
-const selectSql = "SELECT  DISTINCT address  from (SELECT DISTINCT `from` AS address FROM `transaction` UNION SELECT DISTINCT `to` AS address FROM `transaction`) A";
+const selectSql = "SELECT DISTINCT address FROM ( SELECT DISTINCT `from` AS address FROM `transaction_receipt` UNION SELECT DISTINCT `to` AS address FROM `transaction_receipt` UNION SELECT DISTINCT `contractAddress` AS address FROM `transaction_receipt` WHERE contractAddress is not NULL ) A";
 sqlHelper.readDatabase(selectSql, getAddressCallback);
 
 function getAddressCallback(err, result) {

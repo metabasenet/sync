@@ -19,8 +19,8 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
     },
 });
 
-let factoryAddr = '0xF1895D368cbd330B026d44AF610160FeE1bEa675';
-let router02Addr = '0x052f218f647Ef35EbE39950D3A554Ab030B978Ca';
+let factoryAddr = '0x6064216D6817a1620002FBa69d485949A009B59d';
+let router02Addr = '0xdfD106145cC3491E727244deF09CecC46F31BE31';
 
 const uniswapV2FactoryAbi = JSON.parse(fs.readFileSync("./abi/UniswapV2/UniswapV2Factory.json", "utf8"));
 const uniswapV2PairAbi = JSON.parse(fs.readFileSync("./abi/UniswapV2/UniswapV2Pair.json", "utf8"));
