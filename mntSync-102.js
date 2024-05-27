@@ -64,20 +64,6 @@ provider.on("block", async (blockNumber) => {
             let transactionType;
             if (transactionInfo.data.length < 4) {
                 transactionType = 0;
-
-                //sync platform internal transaction
-                const PlatformInternalTransactionModel = {
-                    transactionHash: transactionInfo.hash,
-                    contractAddress: ethers.ZeroAddress,
-                    blockHash: blockInfo.hash,
-                    blockNumber: blockInfo.number,
-                    methodHash: 'transfer',
-                    from: transactionInfo.from,
-                    to: transactionInfo.to,
-                    value: ethers.formatEther(transactionInfo.value),
-                    index: -1,
-                }
-                await PlatformInternalTransaction.create(PlatformInternalTransactionModel, { transaction: sqlTransaction });
             } else if (transactionInfo.data.length > 4) {
                 if (transactionInfo.to == undefined) {
                     transactionType = 1;
@@ -131,6 +117,22 @@ provider.on("block", async (blockNumber) => {
                 console.log("Transaction Receipt information saved failed!\n" + error);
             })
 
+            if (transactionInfo.data.length < 4 && transactionReceiptInfo.status == 1) {
+                //sync platform internal transaction
+                const PlatformInternalTransactionModel = {
+                    transactionHash: transactionInfo.hash,
+                    contractAddress: ethers.ZeroAddress,
+                    blockHash: blockInfo.hash,
+                    blockNumber: blockInfo.number,
+                    methodHash: 'transfer',
+                    from: transactionInfo.from,
+                    to: transactionInfo.to,
+                    value: transactionInfo.value,
+                    index: -1,
+                }
+                await PlatformInternalTransaction.create(PlatformInternalTransactionModel, { transaction: sqlTransaction });
+            }
+
             //sync create contract info
             if (transactionReceiptInfo.contractAddress != null) {
                 const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));
@@ -161,6 +163,7 @@ provider.on("block", async (blockNumber) => {
 
                 }
             }
+
             //erc20 log
             if (transactionReceiptInfo.logs.length > 0) {
                 for (let m = 0; m < transactionReceiptInfo.logs.length; m++) {

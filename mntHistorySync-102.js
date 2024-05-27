@@ -90,19 +90,6 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
             if (transactionInfo.data.length < 4) {
                 transactionType = 0;
 
-                //sync platform internal transaction
-                const PlatformInternalTransactionModel = {
-                    transactionHash: transactionInfo.hash,
-                    contractAddress: ethers.ZeroAddress,
-                    blockHash: blockInfo.hash,
-                    blockNumber: blockInfo.number,
-                    methodHash: 'transfer',
-                    from: transactionInfo.from,
-                    to: transactionInfo.to,
-                    value: ethers.formatEther(transactionInfo.value),
-                    index: -1,
-                }
-                PlatformInternalTransactionModelArray.push(PlatformInternalTransactionModel);
             } else if (transactionInfo.data.length > 4) {
                 if (transactionInfo.to == undefined) {
                     transactionType = 1;
@@ -148,6 +135,22 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
                 type: transactionType
             }
             transactionReceiptInfoArray.push(transactionReceiptInfoModel);
+
+            if (transactionInfo.data.length > 4 && transactionReceiptInfo.status == 1) {
+                //sync platform internal transaction
+                const PlatformInternalTransactionModel = {
+                    transactionHash: transactionInfo.hash,
+                    contractAddress: ethers.ZeroAddress,
+                    blockHash: blockInfo.hash,
+                    blockNumber: blockInfo.number,
+                    methodHash: 'transfer',
+                    from: transactionInfo.from,
+                    to: transactionInfo.to,
+                    value: transactionInfo.value,
+                    index: -1,
+                }
+                PlatformInternalTransactionModelArray.push(PlatformInternalTransactionModel);
+            }
 
             if (transactionReceiptInfo.contractAddress != null) {
                 const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));

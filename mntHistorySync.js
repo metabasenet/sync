@@ -9,6 +9,7 @@ import fs from "fs";
 import { TransactionErc20 } from "./models/transaction_erc20.js";
 import { sqlHelper } from "./database/sqlHelper.js";
 import { RunConfig } from "./RunConfig.js";
+import { PlatformInternalTransaction } from "./models/platform_internal_transaction.js"
 //ethers 6.6.4
 
 const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl);
@@ -41,6 +42,7 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
     let transactionReceiptInfoArray = [];
     let contartInfoArray = [];
     let TransactionErc20ModelArray = [];
+    let PlatformInternalTransactionModelArray = [];
     for (let k = i; k < i + asyncStep; k++) {
         if (k > endNumber) {
             break;
@@ -133,6 +135,22 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
             }
             transactionReceiptInfoArray.push(transactionReceiptInfoModel);
 
+            if (transactionInfo.data.length > 4 && transactionReceiptInfo.status == 1) {
+                //sync platform internal transaction
+                const PlatformInternalTransactionModel = {
+                    transactionHash: transactionInfo.hash,
+                    contractAddress: ethers.ZeroAddress,
+                    blockHash: blockInfo.hash,
+                    blockNumber: blockInfo.number,
+                    methodHash: 'transfer',
+                    from: transactionInfo.from,
+                    to: transactionInfo.to,
+                    value: transactionInfo.value,
+                    index: -1,
+                }
+                PlatformInternalTransactionModelArray.push(PlatformInternalTransactionModel);
+            }
+
             if (transactionReceiptInfo.contractAddress != null) {
                 const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));
                 try {
@@ -173,7 +191,11 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
                         value: transactionReceiptInfo.logs[m].data != null ? transactionReceiptInfo.logs[m].data : null,
                         index: transactionReceiptInfo.logs[m].index
                     }
-                    TransactionErc20ModelArray.push(TransactionErc20Model);
+                    if (TransactionErc20Model.contractAddress != ethers.ZeroAddress) {
+                        TransactionErc20ModelArray.push(TransactionErc20Model);
+                    } else {
+                        PlatformInternalTransactionModelArray.push(TransactionErc20Model)
+                    }
                 }
             }
         }
@@ -190,6 +212,9 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
     }
     if (TransactionErc20ModelArray.length > 0) {
         bulkCreateTransactionErc20(TransactionErc20ModelArray)
+    }
+    if (PlatformInternalTransactionModelArray.length > 0) {
+        bulkCreatePlatformInternalTransaction(PlatformInternalTransactionModelArray);
     }
 }
 
@@ -319,5 +344,12 @@ async function bulkCreateTransactionErc20(TransactionErc20ModelArray) {
         console.log("ERC20 transaction save successfully!");
     }).catch(error => {
         console.log("ERC20 transaction save failed!\n" + error);
+    })
+}
+async function bulkCreatePlatformInternalTransaction(platformInternalTransactionModelArray) {
+    await PlatformInternalTransaction.bulkCreate(platformInternalTransactionModelArray).then(() => {
+        console.log("platform internal transaction save successfully!");
+    }).catch(error => {
+        console.log("platform internal transaction save failed!\n" + error);
     })
 }

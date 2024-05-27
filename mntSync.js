@@ -68,17 +68,6 @@ provider.on("block", async (blockNumber) => {
             let transactionType;
             if (transactionInfo.data.length < 4) {
                 transactionType = 0;
-
-                //sync platform transactin
-                const TransactionPlatformModel = {
-                    transactionHash: transactionInfo.hash,
-                    from: transactionInfo.from,
-                    to: transactionInfo.to,
-                    value: ethers.formatEther(transactionInfo.value),
-                    index: -1,
-                    utc: blockInfo.timestamp
-                }
-                await TransactionPlatform.create(TransactionPlatformModel, { transaction: sqlTransaction });
             } else if (transactionInfo.data.length > 4) {
                 if (transactionInfo.to == undefined) {
                     transactionType = 1;
@@ -133,6 +122,20 @@ provider.on("block", async (blockNumber) => {
                 console.log("Transaction Receipt information saved failed!\n" + error);
             })
 
+            if (transactionInfo.data.length < 4 && transactionReceiptInfo.status == 1) {
+                //sync platform transactin
+                const TransactionPlatformModel = {
+                    transactionHash: transactionInfo.hash,
+                    from: transactionInfo.from,
+                    to: transactionInfo.to,
+                    value: ethers.formatEther(transactionInfo.value),
+                    index: -1,
+                    utc: blockInfo.timestamp
+                }
+                await TransactionPlatform.create(TransactionPlatformModel, { transaction: sqlTransaction });
+
+            }
+
             //sync create contract info
             if (transactionReceiptInfo.contractAddress != null) {
                 const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));
@@ -178,7 +181,12 @@ provider.on("block", async (blockNumber) => {
                         value: transactionReceiptInfo.logs[m].data != null ? transactionReceiptInfo.logs[m].data : null,
                         index: transactionReceiptInfo.logs[m].index
                     }
-                    await TransactionErc20.create(TransactionErc20Model, { transaction: sqlTransaction });
+
+                    if (TransactionErc20Model.contractAddress != ethers.ZeroAddress) {
+                        await TransactionErc20.create(TransactionErc20Model, { transaction: sqlTransaction });
+                    } else {
+                        await PlatformInternalTransaction.create(TransactionErc20Model, { transaction: sqlTransaction })
+                    }
 
                     //update ERC20 balance
                     try {
@@ -199,28 +207,6 @@ provider.on("block", async (blockNumber) => {
                     }
                 }
             }
-
-            //platform transfer log
-            const result = await provider.send('debug_traceTransaction', [transactionInfo.hash]);
-            for (let i = 0; i < result.structLogs.length; i++) {
-                if (result.structLogs[i].op == 'CALL') {
-                    const l = result.structLogs[i].stack.length;
-                    const gas = result.structLogs[i].stack[l - 1];
-                    const in_size = result.structLogs[i].stack[l - 5];
-                    if (in_size == 0) {
-                        const TransactionPlatformModel = {
-                            transactionHash: transactionInfo.hash,
-                            from: transactionInfo.to,
-                            to: result.structLogs[i].stack[l - 2],
-                            value: ethers.formatEther(result.structLogs[i].stack[l - 3]),
-                            index: i,
-                            utc: blockInfo.timestamp
-                        }
-                        await TransactionPlatform.create(TransactionPlatformModel, { transaction: sqlTransaction });
-                    }
-                }
-            }
-
 
             //update balance
             updateBalance(transactionReceiptInfo.from);

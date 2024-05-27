@@ -18,16 +18,9 @@ import { RunConfig } from "./RunConfig.js";
 //     }
 // }
 
-let startNumber = 0;
-let endNumber = 37;
-let asyncStep = 10;
-for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
-    console.log("   " + i + "       " + (i + asyncStep));
-    for (let k = i; k < i + asyncStep; k++) {
-        if (k > endNumber) {
-            console.log("不执行:" + k)
-            break;
-        }
-        console.log("处理:" + k)
-    }
-}
+// const provider0 = new ethers.JsonRpcProvider('https://rpc.metabasenet.site');
+// const transaction = await provider0.getTransactionReceipt("0x494c0c262894635a8af4a98308cac718eb84939742a3814b39d2cf1469cac104");
+// console.log(transaction);
+
+
+console.log(ethers.formatUnits('23967900000000000000000', 9))  
