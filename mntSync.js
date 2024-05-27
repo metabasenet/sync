@@ -6,6 +6,7 @@ import { Contract } from "./models/contract.js";
 import fs from "fs";
 import { TransactionErc20 } from "./models/transaction_erc20.js"
 import { TransactionPlatform } from "./models/transaction_platform.js"
+import { PlatformInternalTransaction } from "./models/platform_internal_transaction.js"
 import { Sequelize } from 'sequelize';
 import { config } from "./database/config.js";
 import { RunConfig } from "./RunConfig.js";
@@ -27,7 +28,7 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
 
 const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl);
 provider.on("block", async (blockNumber) => {
-    // blockNumber = 6102209;
+    // blockNumber = 96566
     const sqlTransaction = await sequelize.transaction();
     try {
         console.log(blockNumber)
@@ -124,15 +125,18 @@ provider.on("block", async (blockNumber) => {
 
             if (transactionInfo.data.length < 4 && transactionReceiptInfo.status == 1) {
                 //sync platform transactin
-                const TransactionPlatformModel = {
+                const PlatformInternalTransactionModel = {
                     transactionHash: transactionInfo.hash,
+                    contractAddress: ethers.ZeroAddress,
+                    blockHash: blockInfo.hash,
+                    blockNumber: blockInfo.number,
+                    methodHash: 'transfer',
                     from: transactionInfo.from,
                     to: transactionInfo.to,
-                    value: ethers.formatEther(transactionInfo.value),
+                    value: transactionInfo.value,
                     index: -1,
-                    utc: blockInfo.timestamp
                 }
-                await TransactionPlatform.create(TransactionPlatformModel, { transaction: sqlTransaction });
+                await PlatformInternalTransaction.create(PlatformInternalTransactionModel, { transaction: sqlTransaction });
 
             }
 

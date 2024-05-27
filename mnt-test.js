@@ -18,9 +18,10 @@ import { RunConfig } from "./RunConfig.js";
 //     }
 // }
 
-// const provider0 = new ethers.JsonRpcProvider('https://rpc.metabasenet.site');
-// const transaction = await provider0.getTransactionReceipt("0x494c0c262894635a8af4a98308cac718eb84939742a3814b39d2cf1469cac104");
-// console.log(transaction);
+const provider0 = new ethers.JsonRpcProvider('https://rpc.metabasenet.site');
+const transactionReceiptInfo = await provider0.getTransactionReceipt("0x94cd41f3d3a1aceb0090d2917a96d512ac3e77973c2d18b8b0397b2e67a08308");
+const transactionInfo = await provider0.getTransaction("0x94cd41f3d3a1aceb0090d2917a96d512ac3e77973c2d18b8b0397b2e67a08308");
+console.log(transactionInfo.data.length < 4 && transactionReceiptInfo.status == 1);
 
 
-console.log(ethers.formatUnits('23967900000000000000000', 9))  
+// console.log(ethers.formatUnits('23967900000000000000000', 9))  
