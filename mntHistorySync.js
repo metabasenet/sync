@@ -135,7 +135,7 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
             }
             transactionReceiptInfoArray.push(transactionReceiptInfoModel);
 
-            if (transactionInfo.data.length > 4 && transactionReceiptInfo.status == 1) {
+            if (transactionInfo.value > 0 && transactionReceiptInfo.status == 1) {
                 //sync platform internal transaction
                 const PlatformInternalTransactionModel = {
                     transactionHash: transactionInfo.hash,

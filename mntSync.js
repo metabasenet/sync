@@ -28,7 +28,7 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
 
 const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl);
 provider.on("block", async (blockNumber) => {
-    // blockNumber = 96566
+    // blockNumber = 98265
     const sqlTransaction = await sequelize.transaction();
     try {
         console.log(blockNumber)
@@ -123,7 +123,7 @@ provider.on("block", async (blockNumber) => {
                 console.log("Transaction Receipt information saved failed!\n" + error);
             })
 
-            if (transactionInfo.data.length < 4 && transactionReceiptInfo.status == 1) {
+            if (transactionInfo.value > 0 && transactionReceiptInfo.status == 1) {
                 //sync platform transactin
                 const PlatformInternalTransactionModel = {
                     transactionHash: transactionInfo.hash,
@@ -137,7 +137,6 @@ provider.on("block", async (blockNumber) => {
                     index: -1,
                 }
                 await PlatformInternalTransaction.create(PlatformInternalTransactionModel, { transaction: sqlTransaction });
-
             }
 
             //sync create contract info
