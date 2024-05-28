@@ -214,6 +214,7 @@ provider.on("block", async (blockNumber) => {
             //update balance
             updateBalance(transactionReceiptInfo.from);
             updateBalance(transactionReceiptInfo.to);
+            updateBalance(transactionReceiptInfo.contractAddress);
         }
         await sqlTransaction.commit();
         await updateMNtprice(provider);
@@ -232,15 +233,13 @@ provider.on("block", async (blockNumber) => {
 
 
 function updateBalance(address) {
-    if (address != null) {
-        provider.getCode(address).then(code => {
-            provider.getBalance(address).then(balance => {
-                let sql = "REPLACE  INTO platform_balance(address, balance, updateTime) VALUES (:address, :balance, NOW())";
-                sequelize.query(sql, {
-                    replacements: { address: address, balance: balance },
-                    type: Sequelize.QueryTypes.INSERT
-                });
-            })
+    if (address != null && address != ethers.ZeroAddress) {
+        provider.getBalance(address).then(balance => {
+            let sql = "REPLACE  INTO platform_balance(address, balance, updateTime) VALUES (:address, :balance, NOW())";
+            sequelize.query(sql, {
+                replacements: { address: address, balance: balance },
+                type: Sequelize.QueryTypes.INSERT
+            });
         })
     }
 }

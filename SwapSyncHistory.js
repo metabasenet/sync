@@ -26,7 +26,7 @@ const uniswapV2FactoryAbi = JSON.parse(fs.readFileSync("./abi/UniswapV2/UniswapV
 const uniswapV2PairAbi = JSON.parse(fs.readFileSync("./abi/UniswapV2/UniswapV2Pair.json", "utf8"));
 const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));
 
-const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl102);
+const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl);
 const factoryContract = new ethers.Contract(factoryAddr, uniswapV2FactoryAbi, provider);
 const pairCreatedEvents = await factoryContract.queryFilter('PairCreated', RunConfig.swapStartNumber, RunConfig.swapEndNumber)
 for (let i = 0; i < pairCreatedEvents.length; i++) {

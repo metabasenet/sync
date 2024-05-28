@@ -260,7 +260,7 @@ for (let i = Number(startNumber); i <= endNumber; i = i + asyncStep) {
 
 //update platform balance 
 sqlHelper.init();
-const selectSql = "SELECT  DISTINCT address  from (SELECT DISTINCT `from` AS address FROM `transaction` UNION SELECT DISTINCT `to` AS address FROM `transaction`) A";
+const selectSql = "SELECT DISTINCT address FROM ( SELECT DISTINCT `from` AS address FROM `transaction_receipt` UNION SELECT DISTINCT `to` AS address FROM `transaction_receipt` UNION SELECT DISTINCT `contractAddress` AS address FROM `transaction_receipt` WHERE contractAddress is not NULL ) A";
 sqlHelper.readDatabase(selectSql, getAddressCallback);
 
 function getAddressCallback(err, result) {
@@ -268,7 +268,7 @@ function getAddressCallback(err, result) {
         console.log(err.message);
     } else {
         for (let i in result) {
-            if (result[i].address != null) {
+            if (result[i].address != null && result[i].address != ethers.ZeroAddress) {
                 provider.getBalance(result[i].address).then(balance => {
                     const address = result[i].address;
                     let insertSql = `REPLACE  INTO platform_balance(address, balance, updateTime) VALUES ('${address}', ${balance}, ?)`;
