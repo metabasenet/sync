@@ -11,9 +11,10 @@ import time
 import asyncio
 from web3.middleware import async_geth_poa_middleware
 from web3 import AsyncWeb3
-from web3.providers import WebsocketProviderV2
+#from web3.providers import WebsocketProviderV2
+from web3 import AsyncWeb3, AsyncHTTPProvider
 
-web3 = Web3(Web3.WebsocketProvider(config.rpcws))
+web3 = Web3(Web3.HTTPProvider(config.rpcurl))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 connection = pymysql.connect(host=config.host, port=config.port,
@@ -71,7 +72,7 @@ def sync_history():
 
 
 async def subscription_newHeads():
-    async with AsyncWeb3.persistent_websocket(WebsocketProviderV2(config.rpcws)) as w3:
+    async with AsyncWeb3.persistent_websocket(AsyncHTTPProvider(config.rpcurl)) as w3:
         w3.middleware_onion.inject(async_geth_poa_middleware, layer=0)
         subscription_id = await w3.eth.subscribe("newHeads")
         while True:
