@@ -38,6 +38,10 @@ export const TransactionErc20 = sequelize.define('transaction_erc20', {
     type: DataTypes.STRING(100),
     allowNull: true
   },
+  to: {
+    type: DataTypes.STRING(100),
+    allowNull: true
+  },
   value: {
     type: DataTypes.STRING(500),
     allowNull: true
