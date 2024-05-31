@@ -3,6 +3,7 @@ import fs from "fs";
 import { RunConfig } from "./RunConfig.js";
 import { config } from "./database/config.js";
 import { Sequelize } from 'sequelize';
+import { BigNumber } from 'bignumber.js'
 import { SwapPairs } from "./models/swap_pairs.js"
 // swap 0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822
 // PairCreated 0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9
@@ -26,7 +27,7 @@ const uniswapV2FactoryAbi = JSON.parse(fs.readFileSync("./abi/UniswapV2/UniswapV
 const uniswapV2PairAbi = JSON.parse(fs.readFileSync("./abi/UniswapV2/UniswapV2Pair.json", "utf8"));
 const ERC20ABi = JSON.parse(fs.readFileSync("./abi/erc20.json", "utf8"));
 
-const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl102);
+const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl);
 
 for (let i = RunConfig.swapStartNumber; i <= RunConfig.swapEndNumber; i++) {
     console.log("synchronize swap data,blockNumber:" + i)
@@ -97,6 +98,28 @@ for (let i = RunConfig.swapStartNumber; i <= RunConfig.swapEndNumber; i++) {
                             receiver: transactionReceiptInfo.logs[k].topics[2].replace("0x000000000000000000000000", "0x"),
                             token0_symbol: await token0Contract.symbol(),
                             token1_symbol: await token1Contract.symbol(),
+                            index: transactionReceiptInfo.logs[k].index,
+                            time: new Date(blockInfo.timestamp * 1000),
+                        },
+                        type: Sequelize.QueryTypes.INSERT
+                    });
+                }
+
+                if (transactionReceiptInfo.logs[k].topics[0] == '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1') {
+                    const pairAddress = transactionReceiptInfo.logs[k].address;
+                    const data = transactionReceiptInfo.logs[k].data;
+                    const paramLength = 64;
+                    const reserve0 = BigInt("0x" + data.slice(2, paramLength + 2));
+                    const reserve1 = BigInt("0x" + data.slice(paramLength + 3, paramLength * 2 + 2));
+
+                    let swapTxPriceSql = "REPLACE INTO `swap_tx_price`(`pair_address`, `block_number`, `transaction_hash`, `rate01`, `rate10`, `index`, `time`) VALUES (:pair_address, :block_number, :transaction_hash, :rate01, :rate10, :index, :time);";
+                    sequelize.query(swapTxPriceSql, {
+                        replacements: {
+                            pair_address: pairAddress,
+                            block_number: transactionReceiptInfo.logs[k].blockNumber,
+                            transaction_hash: transactionReceiptInfo.logs[k].transactionHash,
+                            rate01: BigNumber(reserve0).div(reserve1).toFixed(18),
+                            rate10: BigNumber(reserve1).div(reserve0).toFixed(18),
                             index: transactionReceiptInfo.logs[k].index,
                             time: new Date(blockInfo.timestamp * 1000),
                         },

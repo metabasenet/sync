@@ -5,6 +5,6 @@ export const RunConfig = {
     asyncStep: 10,
     startNumber: 18280,
     endNumber: 18280,
-    swapStartNumber: 18030,
-    swapEndNumber: 30000
+    swapStartNumber: 0,
+    swapEndNumber: 202945
 }
