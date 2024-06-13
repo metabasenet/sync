@@ -21,6 +21,7 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
     dialect: 'mysql',
     host: config.host,
     timezone: config.timezone,
+    port: config.port,
     pool: {
         max: 5,
         min: 0,
@@ -295,11 +296,8 @@ async function getErc20AddressCallback(err, result) {
                 //update ERC20 balance
                 let address = result[i].address.replace("0x000000000000000000000000", "0x");
                 let balance = await contract.balanceOf(address);
-                console.log(balance)
-                if (balance !== null && balance > 0) {
-                    let insertSql = `REPLACE  INTO erc20_balance(address,contractAddress, balance, updateTime) VALUES ('${address}','${result[i].contractAddress}', '${balance}', NOW())`;
-                    sqlHelper.writeDatabase(insertSql, new Date());
-                }
+                let insertSql = `REPLACE  INTO erc20_balance(address,contractAddress, balance, updateTime) VALUES ('${address}','${result[i].contractAddress}', '${balance}', NOW())`;
+                sqlHelper.writeDatabase(insertSql, new Date());
             } catch (ex) {
                 console.log(ex.message)
             }

@@ -246,13 +246,11 @@ function updateBalance(address) {
 }
 
 function updateErc20Balance(address, contractAddress, balance) {
-    if (balance > 0) {
-        let sql = "REPLACE  INTO erc20_balance(address,contractAddress, balance, updateTime) VALUES (:address,:contractAddress, :balance, NOW())";
-        sequelize.query(sql, {
-            replacements: { address: address, contractAddress: contractAddress, balance: balance },
-            type: Sequelize.QueryTypes.INSERT
-        });
-    }
+    let sql = "REPLACE  INTO erc20_balance(address,contractAddress, balance, updateTime) VALUES (:address,:contractAddress, :balance, NOW())";
+    sequelize.query(sql, {
+        replacements: { address: address, contractAddress: contractAddress, balance: balance },
+        type: Sequelize.QueryTypes.INSERT
+    });
 }
 
 
