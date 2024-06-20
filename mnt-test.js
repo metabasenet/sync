@@ -1,6 +1,11 @@
 import { ethers } from "ethers";
 import { RunConfig } from "./RunConfig.js";
 
+import { sqlHelper } from "./database/sqlHelper.js";
+import fs from "fs";
+
+const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl);
+
 // const provider = new ethers.JsonRpcProvider(RunConfig.ChainUrl);
 
 // let numberRange = process.argv.slice(2)[0];
@@ -24,4 +29,6 @@ const transactionInfo = await provider0.getTransaction("0x94cd41f3d3a1aceb0090d2
 console.log(transactionInfo.data.length < 4 && transactionReceiptInfo.status == 1);
 
 
-// console.log(ethers.formatUnits('23967900000000000000000', 9))  
+provider.getBalance("0x670A235Efba2ee081aE09AeeBE53ae359F13F4f6").then(balance => {
+    console.log(balance);
+})

@@ -217,6 +217,7 @@ provider.on("block", async (blockNumber) => {
             updateBalance(transactionReceiptInfo.to);
             updateBalance(transactionReceiptInfo.contractAddress);
         }
+        updateBalance(RunConfig.validated_addr);
         await sqlTransaction.commit();
         await updateMNtprice(provider);
     } catch (e) {
